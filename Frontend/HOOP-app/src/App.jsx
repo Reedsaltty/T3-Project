@@ -1,6 +1,6 @@
 
 import {Routes, Route} from 'react-router-dom';
-import Verify from './components/Verify';
+import Verify from './components/Verify/Verify';
 import './App.css' ;
 import { Home } from 'lucide-react';
 
@@ -12,7 +12,7 @@ function App() {
     
       <Routes>
         <Route path="/" element={<Verify />} />
-        <Route path="/" element={<Home />}>
+        <Route path="/" element={<Home />} />
       </Routes>
 
       
