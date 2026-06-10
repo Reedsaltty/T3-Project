@@ -12,7 +12,7 @@ function App() {
     
       <Routes>
         <Route path="/" element={<Verify />} />
-        <Route path="/" element={<Home />} />
+        <Route path="/home" element={<Home />} />
       </Routes>
 
       
