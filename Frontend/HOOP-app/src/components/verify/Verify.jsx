@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ChevronRight } from "lucide-react";
-import LogIn from "./LogIn";
-import { Register } from "./Register";
+import Login from "./Login";
+import Register from "./Register";
 
 export default function Verify() {
   const [slide, setSlide] = useState(0);
@@ -115,7 +115,7 @@ export default function Verify() {
             }}
           >
             <div className="w-1/2 flex-shrink-0 flex justify-center px-2">
-              <LogIn onSwitchView={() => setIsLogin(false)} />
+              <Login onSwitchView={() => setIsLogin(false)} />
             </div>
             <div className="w-1/2 flex-shrink-0 flex justify-center px-2">
               <Register onSwitchView={() => setIsLogin(true)} />

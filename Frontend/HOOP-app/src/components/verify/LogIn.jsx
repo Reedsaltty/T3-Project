@@ -1,11 +1,13 @@
 import { useState } from "react";
 import {  Eye, EyeOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
-export default function LogIn({ onSwitchView }) {
+export default function Login({ onSwitchView }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   function handleLogin(e) {
     e.preventDefault();
@@ -14,7 +16,8 @@ export default function LogIn({ onSwitchView }) {
       return;
     }
     setError("");
-    alert(`Logging in as ${email}`);
+    // Redirect to the home page after login
+    navigate("/home");
   }
 
   return (

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FiCircle as Circle, FiCheckCircle as CheckCircle, FiXCircle as XCircle, FiEye as Eye, FiEyeOff as EyeOff } from "react-icons/fi";
 
-export function Register({ onSwitchView }) {
+export default function Register({ onSwitchView }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

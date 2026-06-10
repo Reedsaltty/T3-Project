@@ -1,18 +1,17 @@
 
 import {Routes, Route} from 'react-router-dom';
-import Verify from './components/Verify/Verify';
+import HomePage from './components/Homepage/HomePage';
+import Verify from './components/verify/Verify';
 import './App.css' ;
-import { Home } from 'lucide-react';
 
 function App() {
 
 
   return (
     <>
-    
       <Routes>
         <Route path="/" element={<Verify />} />
-        <Route path="/home" element={<Home />} />
+        <Route path="/home" element={<HomePage />} />
       </Routes>
 
       
