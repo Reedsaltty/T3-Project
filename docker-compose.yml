@@ -1,0 +1,77 @@
+services:
+  # Backend service
+  backend:
+    build:
+      context: ./BackEnd
+      dockerfile: Dockerfile
+    container_name: hoop-backend
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: ${DATABASE_URL:-postgresql://user:password@db:5432/hoop_db}
+      JWT_SECRET: ${JWT_SECRET:-your-secret-key-change-in-production}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_ANON_KEY: ${SUPABASE_ANON_KEY:-}
+    volumes:
+      - ./BackEnd/src:/app/src
+    depends_on:
+      - db
+    networks:
+      - hoop-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Frontend service
+  frontend:
+    build:
+      context: ./Frontend/HOOP-app
+      dockerfile: Dockerfile
+    container_name: hoop-frontend
+    ports:
+      - "3001:3001"
+    depends_on:
+      - backend
+    networks:
+      - hoop-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3001/index.html"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+
+  # Database service (PostgreSQL for Prisma)
+  db:
+    image: postgres:17-alpine
+    container_name: hoop-db
+    environment:
+      POSTGRES_USER: ${DB_USER:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_NAME:-hoop_db}
+    volumes:
+      - hoop-db-data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - hoop-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  hoop-db-data:
+
+networks:
+  hoop-network:
+    driver: bridge

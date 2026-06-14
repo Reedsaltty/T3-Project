@@ -45,6 +45,14 @@ graph TD
   - [app.js](file:///Users/leaphourleu/Storage/Y2SE/T3/T3%20Project%20/T3-Project/BackEnd/src/app.js): Application middleware configuration and endpoint setup.
   - Directories structured for MVC patterns: controllers, models, routes, databases, middlewares, services, utils, and validation.
 
+#### Planned Route Structure (Modular)
+To maintain separation of concerns, the backend API routes should be split into domain-specific files:
+- **Auth (`/api/auth`):** `auth.routes.js` (Login, Register, Verify)
+- **Events (`/api/events`):** `events.routes.js` (Event creation, fetching, and updating)
+- **Venues (`/api/venues`):** `venues.routes.js` (Venue selection logic)
+- **Guests (`/api/guests`):** `guests.routes.js` (RSVP tracking and attendance)
+- **Budget (`/api/budget`):** `budget.routes.js` (Expense tracker and budget analyzer)
+
 ---
 
 ## 🎨 Design System (Muted Green Theme)

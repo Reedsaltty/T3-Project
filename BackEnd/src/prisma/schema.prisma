@@ -1,0 +1,185 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  userId       Int       @id @default(autoincrement())
+  username     String    @db.VarChar(100)
+  email        String    @unique @db.VarChar(150)
+  passwordHash String    @db.VarChar(255)
+  createdAt    DateTime  @default(now())
+
+  userRoles       UserRole[]
+  organizedEvents Event[]        @relation("EventOrganizer")
+  eventMembers    EventMember[]
+  tasks           Task[]
+  notifications   Notification[]
+
+  @@map("users")
+}
+
+model Role {
+  roleId   Int        @id @default(autoincrement())
+  roleName String     @db.VarChar(50)
+  
+  userRoles UserRole[]
+
+  @@map("roles")
+}
+
+model UserRole {
+  id      Int  @id @default(autoincrement())
+  userId  Int
+  roleId  Int
+
+  user    User @relation(fields: [userId], references: [userId])
+  role    Role @relation(fields: [roleId], references: [roleId])
+
+  @@unique([userId, roleId])
+  @@map("user_roles")
+}
+
+model EventType {
+  eventTypeId Int      @id @default(autoincrement())
+  typeName    String   @db.VarChar(100)
+
+  events      Event[]
+
+  @@map("event_types")
+}
+
+model Event {
+  eventId     Int      @id @default(autoincrement())
+  userId      Int
+  eventTitle  String   @db.VarChar(200)
+  eventTypeId Int
+  eventDate   DateTime @db.Date
+  eventTime   DateTime @db.Time
+  budget      Decimal  @db.Decimal(10,2)
+  createdAt   DateTime @default(now())
+
+  organizer   User          @relation("EventOrganizer", fields: [userId], references: [userId])
+  eventType   EventType     @relation(fields: [eventTypeId], references: [eventTypeId])
+  
+  venues      Venue[]
+  attendees   Attendee[]
+  eventMembers EventMember[]
+  tasks       Task[]
+  activities  Activity[]
+  expenses    Expense[]
+
+  @@map("events")
+}
+
+model Venue {
+  venueId  Int    @id @default(autoincrement())
+  name     String @db.VarChar(150)
+  location String @db.VarChar(255)
+  capacity Int
+  eventId  Int
+
+  event    Event  @relation(fields: [eventId], references: [eventId])
+
+  @@map("venues")
+}
+
+enum AttendeeStatus {
+  pending
+  accepted
+  declined
+  maybe
+}
+
+model Attendee {
+  attendeeId   Int            @id @default(autoincrement())
+  eventId      Int
+  name         String         @db.VarChar(150)
+  email        String         @db.VarChar(150)
+  status       AttendeeStatus @default(pending)
+  responseTime DateTime?
+
+  event        Event          @relation(fields: [eventId], references: [eventId])
+
+  @@map("attendees")
+}
+
+model EventMember {
+  id      Int    @id @default(autoincrement())
+  eventId Int
+  userId  Int
+  role    String @db.VarChar(50)
+
+  event   Event  @relation(fields: [eventId], references: [eventId])
+  user    User   @relation(fields: [userId], references: [userId])
+
+  @@unique([eventId, userId])
+  @@map("event_members")
+}
+
+enum TaskStatus {
+  pending
+  in_progress
+  done
+}
+
+model Task {
+  taskId      Int        @id @default(autoincrement())
+  eventId     Int
+  assignedTo  Int?       
+  description String     @db.Text
+  status      TaskStatus @default(pending)
+  deadline    DateTime?
+
+  event       Event      @relation(fields: [eventId], references: [eventId])
+  assignee    User?      @relation(fields: [assignedTo], references: [userId])
+
+  @@map("tasks")
+}
+
+model Activity {
+  activityId  Int      @id @default(autoincrement())
+  eventId     Int
+  title       String   @db.VarChar(150)
+  description String?  @db.Text
+  startTime   DateTime
+  endTime     DateTime
+
+  event       Event    @relation(fields: [eventId], references: [eventId])
+
+  @@map("activities")
+}
+
+model Expense {
+  expenseId     Int     @id @default(autoincrement())
+  eventId       Int
+  name          String  @db.VarChar(150)
+  category      String  @db.VarChar(100)
+  estimatedCost Decimal @db.Decimal(10,2)
+  actualCost    Decimal @db.Decimal(10,2)
+
+  event         Event   @relation(fields: [eventId], references: [eventId])
+
+  @@map("expenses")
+}
+
+model Notification {
+  notificationId Int      @id @default(autoincrement())
+  userId         Int
+  message        String   @db.Text
+  isRead         Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  user           User     @relation(fields: [userId], references: [userId])
+
+  @@map("notifications")
+}

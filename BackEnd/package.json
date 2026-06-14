@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,12 +12,23 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
-    "dotenv": "^16.6.1",
+    "@prisma/client": "^7.8.0",
+    "@supabase/ssr": "^0.12.0",
+    "@supabase/supabase-js": "^2.108.1",
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.14.4"
   },
   "devDependencies": {
-    "nodemon": "^3.1.14"
+    "@prisma/adapter-pg": "^7.8.0",
+    "@types/pg": "^8.20.0",
+    "dotenv": "^17.4.2",
+    "i": "^0.3.7",
+    "nodemon": "^3.1.14",
+    "npm": "^11.17.0",
+    "pg": "^8.21.0",
+    "prisma": "^7.8.0"
   }
 }

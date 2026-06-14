@@ -1,9 +1,11 @@
-import { useState } from "react";
+import { useEffect , useState } from "react";
+import axios from "axios";
 import { Eye, EyeOff, ArrowRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+
 
 export default function Login({ onSwitchView }) {
   const [email, setEmail] = useState("");
@@ -12,13 +14,28 @@ export default function Login({ onSwitchView }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-
   function handleLogin(e) {
     e.preventDefault();
     if (!email || !password) { setError("Please fill in all fields."); return; }
     setError("");
     setLoading(true);
-    setTimeout(() => { setLoading(false); navigate("/home"); }, 800);
+    axios.post('http://localhost:3000/login',{
+      email,
+      password
+    }).then(res => {
+      if(res.status == 200){
+        setLoading(false);
+        setError("");
+        navigate("/home");
+      }
+      else{
+        setLoading(false);
+        setError(res.message);
+      }
+    }).catch(error => {
+      setLoading(false);
+      setError(error.message);
+    });
   }
 
   return (
