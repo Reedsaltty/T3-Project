@@ -5,7 +5,7 @@ import { generateAccessToken, generateRefreshToken } from "../utils/jwt.utils.js
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
-
+        console.log(req.body);
         // Basic validation
         if (!username || !email || !password) {
             return res.status(400).json({ message: "Username, email, and password are required" });

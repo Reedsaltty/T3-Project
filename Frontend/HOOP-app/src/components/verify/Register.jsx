@@ -11,7 +11,7 @@ export default function Register({ onSwitchView }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-
+  // const navigate = useNavigate();
   const hasMinLength  = password.length >= 8;
   const hasUpperCase  = /[A-Z]/.test(password);
   const hasSpecialChar = /[^a-zA-Z0-9]/.test(password);
@@ -28,6 +28,7 @@ export default function Register({ onSwitchView }) {
     setError("");
     setLoading(true);
     setTimeout(() => { setLoading(false); alert(`Account created for ${email}!`); }, 800);
+    // navigate("/home");
   }
 
   return (

@@ -19,23 +19,33 @@ export default function Login({ onSwitchView }) {
     if (!email || !password) { setError("Please fill in all fields."); return; }
     setError("");
     setLoading(true);
-    axios.post('http://localhost:3000/login',{
+
+    // Mock successful login without backend
+    setTimeout(() => {
+      setLoading(false);
+      navigate("/home");
+    }, 500);
+
+    /*
+    axios.post('http://localhost:3000/api/auth/login', {
       email,
       password
+    }, {
+      withCredentials: true
     }).then(res => {
-      if(res.status == 200){
+      if(res.status === 200) {
         setLoading(false);
         setError("");
         navigate("/home");
-      }
-      else{
+      } else {
         setLoading(false);
-        setError(res.message);
+        setError(res.data?.message || "Login failed");
       }
     }).catch(error => {
       setLoading(false);
-      setError(error.message);
+      setError(error.response?.data?.message || error.message || "An error occurred");
     });
+    */
   }
 
   return (
