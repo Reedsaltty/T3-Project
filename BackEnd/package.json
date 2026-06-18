@@ -12,6 +12,8 @@
   "license": "ISC",
   "type": "module",
   "dependencies": {
+    "@logtail/node": "^0.5.8",
+    "@logtail/pino": "^0.5.8",
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "@supabase/ssr": "^0.12.0",
@@ -21,7 +23,8 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mysql2": "^3.14.4",
-    "pino": "^10.3.1"
+    "pino": "^10.3.1",
+    "pino-http": "^11.0.0"
   },
   "devDependencies": {
     "dotenv": "^17.4.2",

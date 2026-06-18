@@ -224,7 +224,7 @@ export default function HomePage() {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.2, duration: 0.5 }}
               >
-                <span className="font-heading text-5xl font-extrabold text-blue-100 tracking-tighter leading-none">{s.num}</span>
+                <span className="font-heading text-5xl font-extrabold text-blue-600 tracking-tighter leading-none">{s.num}</span>
                 <h3 className="text-lg font-semibold text-gray-900 mt-2">{s.title}</h3>
                 <p className="text-sm text-gray-500 leading-relaxed">{s.desc}</p>
               </motion.div>

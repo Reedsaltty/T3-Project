@@ -1,5 +1,6 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
+// import { createEvent, getEvents, updateEvent, deleteEvent } from "../controllers/events.controller.js";
 
 const router = express.Router();
 
@@ -7,7 +8,7 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // GET    /api/events          — Get all events for the logged-in user
-router.get("/", (req, res) => { res.sendStatus(501); });
+router.get("/",(req, res) => { res.sendStatus(501); });
 
 // POST   /api/events          — Create a new event
 router.post("/", (req, res) => { res.sendStatus(501); });
