@@ -64,13 +64,14 @@ model Event {
   eventTypeId Int
   eventDate   DateTime @db.Date
   eventTime   DateTime @db.Time
+  eventEndTime DateTime @db.Time
   budget      Decimal  @db.Decimal(10,2)
   createdAt   DateTime @default(now())
 
   organizer   User          @relation("EventOrganizer", fields: [userId], references: [userId])
   eventType   EventType     @relation(fields: [eventTypeId], references: [eventTypeId])
   
-  venues      Venue[]
+  venueBookings VenueBooking[]
   attendees   Attendee[]
   eventMembers EventMember[]
   tasks       Task[]
@@ -81,15 +82,38 @@ model Event {
 }
 
 model Venue {
-  venueId  Int    @id @default(autoincrement())
-  name     String @db.VarChar(150)
-  location String @db.VarChar(255)
-  capacity Int
-  eventId  Int
+  venueId      Int     @id @default(autoincrement())
+  name         String  @db.VarChar(150)
+  location     String  @db.VarChar(255)
+  capacity     Int
+  contactEmail String  @db.VarChar(150)
+  ownerId      Int?    // Optional: links to a User if venue owner has an account
 
-  event    Event  @relation(fields: [eventId], references: [eventId])
+  bookingRequests VenueBooking[]
 
   @@map("venues")
+}
+
+enum BookingStatus {
+  pending    // Organizer submitted — waiting for venue confirmation
+  approved   // Venue owner confirmed the booking
+  rejected   // Venue owner denied the booking
+  cancelled  // Organizer withdrew the request
+}
+
+model VenueBooking {
+  bookingId   Int           @id @default(autoincrement())
+  venueId     Int
+  eventId     Int           @unique // One active venue booking per event
+  status      BookingStatus @default(pending)
+  requestedAt DateTime      @default(now())
+  respondedAt DateTime?     // Timestamp when venue owner acted
+  notes       String?       @db.Text // Venue owner's reply or reason for rejection
+
+  venue       Venue         @relation(fields: [venueId], references: [venueId])
+  event       Event         @relation(fields: [eventId], references: [eventId])
+
+  @@map("venue_bookings")
 }
 
 enum AttendeeStatus {

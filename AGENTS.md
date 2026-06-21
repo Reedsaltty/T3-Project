@@ -49,7 +49,7 @@ graph TD
 To maintain separation of concerns, the backend API routes should be split into domain-specific files:
 - **Auth (`/api/auth`):** `auth.routes.js` (Login, Register, Verify)
 - **Events (`/api/events`):** `events.routes.js` (Event creation, fetching, and updating)
-- **Venues (`/api/venues`):** `venues.routes.js` (Venue selection logic)
+- **Venues (`/api/venues`):** `venues.routes.js` (Venue catalog and booking request logic)
 - **Guests (`/api/guests`):** `guests.routes.js` (RSVP tracking and attendance)
 - **Budget (`/api/budget`):** `budget.routes.js` (Expense tracker and budget analyzer)
 
@@ -101,7 +101,8 @@ erDiagram
     roles ||--o{ user_roles : "assigned to"
     users ||--o{ events : "organizes"
     event_types ||--o{ events : "categorizes"
-    events ||--o{ venues : "booked at"
+    events ||--o{ venue_bookings : "requests"
+    venues ||--o{ venue_bookings : "receives requests"
     events ||--o{ attendees : "invites"
     events ||--o{ event_members : "manages co-hosts"
     users ||--o{ event_members : "acts as co-host"
@@ -177,7 +178,7 @@ Stores individual events created by organizers.
 ---
 
 #### 6. `venues` Table
-Stores selected venue details attached to events.
+Stores details of venues available for events.
 
 | Column | Data Type | Key / Constraint | Default Value | Description |
 | :--- | :--- | :--- | :--- | :--- |
@@ -185,7 +186,25 @@ Stores selected venue details attached to events.
 | `name` | `VarChar(150)` | | | Name of the venue |
 | `location` | `VarChar(255)` | | | Address details |
 | `capacity` | `Int` | | | Max guest count limit |
-| `eventId` | `Int` | Foreign Key (Event) | | Associated event (`Event.eventId`) |
+| `contactEmail` | `VarChar(150)` | | | Venue contact email |
+| `ownerId` | `Int?` | Foreign Key (User), Optional | | Mapped to `User.userId` |
+
+---
+
+#### 6b. `venue_bookings` Table
+Tracks status of venue requests by event creators.
+
+| Column | Data Type | Key / Constraint | Default Value | Description |
+| :--- | :--- | :--- | :--- | :--- |
+| `bookingId` | `Int` | Primary Key (Autoincrement) | | Unique booking request ID |
+| `venueId` | `Int` | Foreign Key (Venue) | | Associated venue ID |
+| `eventId` | `Int` | Foreign Key (Event), Unique | | Associated event ID |
+| `status` | `BookingStatus` | Enum (BookingStatus) | `pending` | Current request status |
+| `requestedAt` | `DateTime` | | `now()` | Creation timestamp |
+| `respondedAt` | `DateTime?` | Optional | | Response timestamp |
+| `notes` | `Text?` | Optional | | Feedback or details from venue |
+
+*   **BookingStatus Enum Values:** `pending`, `approved`, `rejected`, `cancelled`.
 
 ---
 

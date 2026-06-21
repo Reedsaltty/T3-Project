@@ -5,12 +5,6 @@ import { generateAccessToken, generateRefreshToken } from "../utils/jwt.utils.js
 export const register = async (req, res) => {
     try {
         const { username, email, password } = req.body;
-        console.log(req.body);
-        // Basic validation
-        if (!username || !email || !password) {
-            return res.status(400).json({ message: "Username, email, and password are required" });
-        }
-
         // Check if user already exists in Supabase
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) {
@@ -74,3 +68,12 @@ export const login = async (req, res) => {
         res.status(500).json({ message: "Internal server error" });
     }
 };
+
+export const  resetPassWord = async (req, res) => {
+    try {
+
+    } catch (err) {
+        console.error("Reset password Error:", err)
+        res.status(500).json({ message: "Internal server error" });
+    }
+}

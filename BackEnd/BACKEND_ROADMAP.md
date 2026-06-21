@@ -74,15 +74,19 @@ Below are the controllers and routing rules required to fulfill all client-side 
 * **`DELETE /api/events/:id` (Delete Event):**
   * **Action:** Delete the event and cascade-delete all associated venues, tasks, and expenses.
 
-### 📍 B. Venues Controller (`src/controllers/venues.controller.js`)
-* **`POST /api/venues` (Select Venue Option):**
-  * **Input:** `name`, `location`, `capacity`, `eventId`.
-* **`GET /api/venues?eventId=X` (Get Event Venues):**
-  * **Action:** Retrieve proposed venue list for a specific event.
-* **`PUT /api/venues/:venueId` (Update Venue Option):**
-  * **Input:** Price estimation, status, or details.
-* **`DELETE /api/venues/:venueId` (Remove Venue Option):**
-  * **Action:** Delete the venue proposal from the event config.
+### 📍 B. Venues & Bookings Controller (`src/controllers/venues.controller.js`)
+* **`GET /api/venues` (Get Venue Catalog):**
+  * **Action:** Retrieve a list of all available venues from the shared catalog. Can filter by `capacity` or `location`.
+* **`POST /api/venues/bookings` (Request Venue Booking):**
+  * **Input:** `venueId`, `eventId`, `notes`.
+  * **Action:** Create a pending booking request (`VenueBooking` with status `pending`) for the event.
+* **`GET /api/venues/bookings/:bookingId` (Get Booking Details):**
+  * **Action:** Retrieve status and information of a specific booking.
+* **`PATCH /api/venues/bookings/:bookingId` (Update Booking Status):**
+  * **Input:** `status` (`pending`, `approved`, `rejected`, `cancelled`), `notes`.
+  * **Action:** Update status of the booking request. If approved, notifications or emails can be triggered to the organizer.
+* **`DELETE /api/venues/bookings/:bookingId` (Cancel/Delete Booking Request):**
+  * **Action:** Remove/cancel the booking request.
 
 ### 👥 C. Guests/Attendees Controller (`src/controllers/guests.controller.js`)
 * **`POST /api/guests` (Add/Invite Attendee):**

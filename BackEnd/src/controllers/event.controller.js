@@ -2,7 +2,7 @@ import prisma from "../config/prisma.config.js";
 
 
 // CREATE an event
-export const crateEvent = async (req, res) => {
+export const createEvent = async (req, res) => {
     try{
         const {eventTitle , eventType, eventDate, eventTime, budget } = req.body ;
         const newEvent = await prisma.event.create({
