@@ -9,6 +9,10 @@ export default defineConfig({
     react(), 
     tailwindcss()
   ],
+  server: {
+    host: '0.0.0.0', // This forces Vite to listen on all local network addresses
+    port: 5173,      // Ensure Vite stays on your expected port
+  } ,
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
