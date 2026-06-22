@@ -1,5 +1,8 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import { guestSchema } from "../validation/guest.validation.js";
+import { getGuests, getGuestById, updateGuestInfo, deleteGuest, addGuest } from "../controllers/guest.Controller.js";
 
 const router = express.Router();
 
@@ -7,18 +10,18 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // GET    /api/guests               — Get all attendees for an event (?eventId=)
-router.get("/", (req, res) => { res.sendStatus(501); });
+router.get("/api/guests", getGuests);
 
 // POST   /api/guests               — Add a new guest/attendee to an event
-router.post("/", (req, res) => { res.sendStatus(501); });
+router.post("/api/guests", validate(guestSchema),addGuest ); // To be implemented
 
 // GET    /api/guests/:attendeeId   — Get a specific attendee by ID
-router.get("/:attendeeId", (req, res) => { res.sendStatus(501); });
+router.get("/api/guests/:attendeeId", getGuestById);
 
 // PUT    /api/guests/:attendeeId   — Update attendee details or RSVP status
-router.put("/:attendeeId", (req, res) => { res.sendStatus(501); });
+router.put("/api/guests/:attendeeId", validate(guestSchema), updateGuestInfo);
 
 // DELETE /api/guests/:attendeeId   — Remove an attendee from an event
-router.delete("/:attendeeId", (req, res) => { res.sendStatus(501); });
+router.delete("/api/guests/:attendeeId", deleteGuest);
 
 export default router;

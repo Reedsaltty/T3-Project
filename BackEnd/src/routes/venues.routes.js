@@ -1,24 +1,55 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
+import { deleteVenue, getBookingVenue, getVenue, getVenueById, updateVenue, setUpVenue } from "../controllers/venue.controller.js";
+import { validate } from "../middlewares/validate.middleware.js";
+import { venueSchema } from "../validation/venue.validation.js";
+import { updateEvent } from "../controllers/event.controller.js";
 
 const router = express.Router();
 
 // All venue routes are protected — user must be logged in
 router.use(authMiddleware);
 
-// GET    /api/venues          — Get all venues for a given event (?eventId=)
-router.get("/", (req, res) => { res.sendStatus(501); });
+/**
+ * @route   GET /api/venues
+ * @desc    Get all available venues
+ * @access  Private
+ */
+router.get("/api/venues", getVenue);
 
-// POST   /api/venues          — Add a venue to an event
-router.post("/", (req, res) => { res.sendStatus(501); });
+/**
+ * @route   GET /api/venues/:venueId
+ * @desc    Get a specific venue by its ID
+ * @access  Private
+ */
+router.get("/api/venues/:venueId", getVenueById);
 
-// GET    /api/venues/:venueId — Get a specific venue by ID
-router.get("/:venueId", (req, res) => { res.sendStatus(501); });
+/**
+ * @route   GET /api/venues/booking
+ * @desc    Get venue booking information for a specific event
+ * @access  Private
+ */
+router.get("/api/venues/booking", getBookingVenue);
 
-// PUT    /api/venues/:venueId — Update a venue by ID
-router.put("/:venueId", (req, res) => { res.sendStatus(501); });
+/**
+ * @route   POST /api/venues
+ * @desc    Create and set up a new venue
+ * @access  Private
+ */
+router.post("/api/venues", validate(venueSchema), setUpVenue);
 
-// DELETE /api/venues/:venueId — Remove a venue from an event
-router.delete("/:venueId", (req, res) => { res.sendStatus(501); });
+/**
+ * @route   PUT /api/venues/:venueId
+ * @desc    Update an existing venue's details
+ * @access  Private
+ */
+router.put("/api/venues/:venueId", validate(venueSchema), updateVenue);
+
+/**
+ * @route   DELETE /api/venues/:venueId
+ * @desc    Delete a venue from the platform
+ * @access  Private
+ */
+router.delete("/api/venues/:venueId", deleteVenue);
 
 export default router;

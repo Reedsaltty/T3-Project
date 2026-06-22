@@ -229,7 +229,7 @@ export default function TimeAndTask() {
             <Button variant="outline" onClick={() => navigate("/event-creation/venue")} className="gap-2">
               <ArrowLeft size={16} /> Back
             </Button>
-            <Button onClick={() => navigate("/home")} className="gap-2 px-6">
+            <Button onClick={() => navigate("/")} className="gap-2 px-6">
               <CheckCircle2 size={16} /> Create Event
             </Button>
           </div>

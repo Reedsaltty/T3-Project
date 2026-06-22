@@ -2,7 +2,7 @@ import express from "express";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { eventSchema } from "../validation/event.validation.js";
-// import { createEvent, getEvents, updateEvent, deleteEvent } from "../controllers/events.controller.js";
+import { getEventById, createEvent, updateEvent, deleteEvent, getEvents  } from "../controllers/event.controller.js";
 
 const router = express.Router();
 
@@ -10,18 +10,18 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // GET    /api/events          — Get all events for the logged-in user
-router.get("/",(req, res) => { res.sendStatus(501); });
+router.get("/api/events",getEvents);
 
 // POST   /api/events          — Create a new event
-router.post("/", validate(eventSchema) ,(req, res) => { res.sendStatus(501); });
+router.post("/api/events", validate(eventSchema), createEvent)
 
 // GET    /api/events/:id      — Get a single event by ID
-router.get("/:id", (req, res) => { res.sendStatus(501); });
+router.get("/api/events/:id ", getEventById);
 
 // PUT    /api/events/:id      — Update an event by ID
-router.put("/:id", validate(eventSchema),(req, res) => { res.sendStatus(501); });
+router.put("/api/events/:id ", validate(eventSchema),updateEvent);
 
 // DELETE /api/events/:id      — Delete an event by ID
-router.delete("/:id", (req, res) => { res.sendStatus(501); });
+router.delete("/api/events/:id", deleteEvent);
 
 export default router;

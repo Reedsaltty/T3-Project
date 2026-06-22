@@ -11,38 +11,43 @@ import EventOverview  from './components/EventOverview/EventOverview';
 import PageTransition from './components/PageTransition';
 import About          from './components/Homepage/About';
 import Contact        from './components/Homepage/Contact';
+import GlobalLoader   from './components/ui/GlobalLoader';
+import { LoaderProvider } from './context/LoaderContext';
 import './App.css';
 
 function App() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        {/* Auth */}
-        <Route path="/" element={<PageTransition><Verify /></PageTransition>} />
+    <LoaderProvider>
+      <GlobalLoader />
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
+          {/* Landing / Marketing Home */}
+          <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
 
-        {/* Landing / Marketing Home */}
-        <Route path="/home" element={<PageTransition><HomePage /></PageTransition>} />
-        <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+          {/* Auth */}
+          <Route path="/login" element={<PageTransition><Verify /></PageTransition>} />
+          <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+          <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
 
-        {/* Dashboard / Event Inventory */}
-        <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
-        <Route path="/inventory" element={<PageTransition><Dashboard /></PageTransition>} />
+          {/* Dashboard / Event Inventory */}
+          <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
+          <Route path="/inventory" element={<PageTransition><Dashboard /></PageTransition>} />
 
-        {/* Event Creation Flow */}
-        <Route path="/event-creation/setup"     element={<PageTransition><SetUpEvent /></PageTransition>} />
-        <Route path="/event-creation/venue"     element={<PageTransition><VenueSelection /></PageTransition>} />
-        <Route path="/event-creation/time-task" element={<PageTransition><TimeAndTask /></PageTransition>} />
+          {/* Event Creation Flow */}
+          <Route path="/event-creation/setup"     element={<PageTransition><SetUpEvent /></PageTransition>} />
+          <Route path="/event-creation/venue"     element={<PageTransition><VenueSelection /></PageTransition>} />
+          <Route path="/event-creation/time-task" element={<PageTransition><TimeAndTask /></PageTransition>} />
 
-        {/* Event Overview */}
-        <Route path="/event/:id" element={<PageTransition><EventOverview /></PageTransition>} />
+          {/* Event Overview */}
+          <Route path="/event/:id" element={<PageTransition><EventOverview /></PageTransition>} />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AnimatePresence>
+          {/* Fallback */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </AnimatePresence>
+    </LoaderProvider>
   );
 }
 

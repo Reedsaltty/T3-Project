@@ -12,11 +12,11 @@ datasource db {
 }
 
 model User {
-  userId       Int       @id @default(autoincrement())
-  username     String    @db.VarChar(100)
-  email        String    @unique @db.VarChar(150)
-  passwordHash String    @db.VarChar(255)
-  createdAt    DateTime  @default(now())
+  userId       Int      @id @default(autoincrement())
+  username     String   @db.VarChar(100)
+  email        String   @unique @db.VarChar(150)
+  passwordHash String   @db.VarChar(255)
+  createdAt    DateTime @default(now())
 
   userRoles       UserRole[]
   organizedEvents Event[]        @relation("EventOrganizer")
@@ -28,66 +28,66 @@ model User {
 }
 
 model Role {
-  roleId   Int        @id @default(autoincrement())
-  roleName String     @db.VarChar(50)
-  
+  roleId   Int    @id @default(autoincrement())
+  roleName String @db.VarChar(50)
+
   userRoles UserRole[]
 
   @@map("roles")
 }
 
 model UserRole {
-  id      Int  @id @default(autoincrement())
-  userId  Int
-  roleId  Int
+  id     Int @id @default(autoincrement())
+  userId Int
+  roleId Int
 
-  user    User @relation(fields: [userId], references: [userId])
-  role    Role @relation(fields: [roleId], references: [roleId])
+  user User @relation(fields: [userId], references: [userId])
+  role Role @relation(fields: [roleId], references: [roleId])
 
   @@unique([userId, roleId])
   @@map("user_roles")
 }
 
 model EventType {
-  eventTypeId Int      @id @default(autoincrement())
-  typeName    String   @db.VarChar(100)
+  eventTypeId Int    @id @default(autoincrement())
+  typeName    String @db.VarChar(100)
 
-  events      Event[]
+  events Event[]
 
   @@map("event_types")
 }
 
 model Event {
-  eventId     Int      @id @default(autoincrement())
-  userId      Int
-  eventTitle  String   @db.VarChar(200)
-  eventTypeId Int
-  eventDate   DateTime @db.Date
-  eventTime   DateTime @db.Time
+  eventId      Int      @id @default(autoincrement())
+  userId       Int
+  eventTitle   String   @db.VarChar(200)
+  eventTypeId  Int
+  eventDate    DateTime @db.Date
+  eventTime    DateTime @db.Time
   eventEndTime DateTime @db.Time
-  budget      Decimal  @db.Decimal(10,2)
-  createdAt   DateTime @default(now())
+  budget       Decimal  @db.Decimal(10, 2)
+  createdAt    DateTime @default(now())
 
-  organizer   User          @relation("EventOrganizer", fields: [userId], references: [userId])
-  eventType   EventType     @relation(fields: [eventTypeId], references: [eventTypeId])
-  
+  organizer User      @relation("EventOrganizer", fields: [userId], references: [userId])
+  eventType EventType @relation(fields: [eventTypeId], references: [eventTypeId])
+
   venueBookings VenueBooking[]
-  attendees   Attendee[]
-  eventMembers EventMember[]
-  tasks       Task[]
-  activities  Activity[]
-  expenses    Expense[]
+  attendees     Attendee[]
+  eventMembers  EventMember[]
+  tasks         Task[]
+  activities    Activity[]
+  expenses      Expense[]
 
   @@map("events")
 }
 
 model Venue {
-  venueId      Int     @id @default(autoincrement())
-  name         String  @db.VarChar(150)
-  location     String  @db.VarChar(255)
+  venueId      Int    @id @default(autoincrement())
+  name         String @db.VarChar(150)
+  location     String @db.VarChar(255)
   capacity     Int
-  contactEmail String  @db.VarChar(150)
-  ownerId      Int?    // Optional: links to a User if venue owner has an account
+  contactEmail String @db.VarChar(150)
+  ownerId      Int? // Optional: links to a User if venue owner has an account
 
   bookingRequests VenueBooking[]
 
@@ -95,10 +95,10 @@ model Venue {
 }
 
 enum BookingStatus {
-  pending    // Organizer submitted — waiting for venue confirmation
-  approved   // Venue owner confirmed the booking
-  rejected   // Venue owner denied the booking
-  cancelled  // Organizer withdrew the request
+  pending // Organizer submitted — waiting for venue confirmation
+  approved // Venue owner confirmed the booking
+  rejected // Venue owner denied the booking
+  cancelled // Organizer withdrew the request
 }
 
 model VenueBooking {
@@ -107,11 +107,11 @@ model VenueBooking {
   eventId     Int           @unique // One active venue booking per event
   status      BookingStatus @default(pending)
   requestedAt DateTime      @default(now())
-  respondedAt DateTime?     // Timestamp when venue owner acted
+  respondedAt DateTime? // Timestamp when venue owner acted
   notes       String?       @db.Text // Venue owner's reply or reason for rejection
 
-  venue       Venue         @relation(fields: [venueId], references: [venueId])
-  event       Event         @relation(fields: [eventId], references: [eventId])
+  venue Venue @relation(fields: [venueId], references: [venueId])
+  event Event @relation(fields: [eventId], references: [eventId])
 
   @@map("venue_bookings")
 }
@@ -131,7 +131,7 @@ model Attendee {
   status       AttendeeStatus @default(pending)
   responseTime DateTime?
 
-  event        Event          @relation(fields: [eventId], references: [eventId])
+  event Event @relation(fields: [eventId], references: [eventId])
 
   @@map("attendees")
 }
@@ -142,8 +142,8 @@ model EventMember {
   userId  Int
   role    String @db.VarChar(50)
 
-  event   Event  @relation(fields: [eventId], references: [eventId])
-  user    User   @relation(fields: [userId], references: [userId])
+  event Event @relation(fields: [eventId], references: [eventId])
+  user  User  @relation(fields: [userId], references: [userId])
 
   @@unique([eventId, userId])
   @@map("event_members")
@@ -158,13 +158,13 @@ enum TaskStatus {
 model Task {
   taskId      Int        @id @default(autoincrement())
   eventId     Int
-  assignedTo  Int?       
+  assignedTo  Int?
   description String     @db.Text
   status      TaskStatus @default(pending)
   deadline    DateTime?
 
-  event       Event      @relation(fields: [eventId], references: [eventId])
-  assignee    User?      @relation(fields: [assignedTo], references: [userId])
+  event    Event @relation(fields: [eventId], references: [eventId])
+  assignee User? @relation(fields: [assignedTo], references: [userId])
 
   @@map("tasks")
 }
@@ -177,7 +177,7 @@ model Activity {
   startTime   DateTime
   endTime     DateTime
 
-  event       Event    @relation(fields: [eventId], references: [eventId])
+  event Event @relation(fields: [eventId], references: [eventId])
 
   @@map("activities")
 }
@@ -187,10 +187,10 @@ model Expense {
   eventId       Int
   name          String  @db.VarChar(150)
   category      String  @db.VarChar(100)
-  estimatedCost Decimal @db.Decimal(10,2)
-  actualCost    Decimal @db.Decimal(10,2)
+  estimatedCost Decimal @db.Decimal(10, 2)
+  actualCost    Decimal @db.Decimal(10, 2)
 
-  event         Event   @relation(fields: [eventId], references: [eventId])
+  event Event @relation(fields: [eventId], references: [eventId])
 
   @@map("expenses")
 }
@@ -202,7 +202,7 @@ model Notification {
   isRead         Boolean  @default(false)
   createdAt      DateTime @default(now())
 
-  user           User     @relation(fields: [userId], references: [userId])
+  user User @relation(fields: [userId], references: [userId])
 
   @@map("notifications")
 }
