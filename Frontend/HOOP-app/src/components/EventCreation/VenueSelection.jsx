@@ -7,7 +7,6 @@ import {
   Search, 
   ChevronLeft, 
   ChevronRight,
-  Filter,
   Heart
 } from "lucide-react";
 
@@ -99,7 +98,7 @@ export default function VenueSelection({ onNext, onBack }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedVenue, setSelectedVenue] = useState(null);
   const [favorites, setFavorites] = useState(new Set());
-  const [showFilters, setShowFilters] = useState(false);
+  const [error, setError] = useState("");
   const [filters, setFilters] = useState({
     priceRange: "all",
     capacity: "all"
@@ -140,13 +139,16 @@ export default function VenueSelection({ onNext, onBack }) {
 
   const handleSelectVenue = (venue) => {
     setSelectedVenue(venue.id);
+    if (error) setError("");
   };
 
   const handleNext = () => {
-    if (selectedVenue) {
-      const venue = mockVenues.find(v => v.id === selectedVenue);
-      onNext(venue);
+    if (!selectedVenue) {
+      setError("⚠️ Please select a venue before proceeding.");
+      return;
     }
+    const venue = mockVenues.find(v => v.id === selectedVenue);
+    onNext(venue);
   };
 
   return (
@@ -198,46 +200,46 @@ export default function VenueSelection({ onNext, onBack }) {
         {/* Search and Filter Bar */}
         <div className="mb-8">
           {/* Search Input */}
-          <div className="relative mb-4">
+          <div className="relative mb-2">
             <Search size={20} className="absolute left-4 top-1/2 -translate-y-1/2" style={{ color: colors.secondary }} />
             <input
               type="text"
               placeholder="Search venues by name or location..."
               value={searchQuery}
+              maxLength={50}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-11 pr-4 py-3 rounded-lg border outline-none transition-all"
+              className="w-full pl-11 pr-16 py-3 rounded-lg border outline-none transition-all"
               style={{
-                borderColor: colors.border,
+                borderColor: searchQuery.length >= 50 ? colors.error : colors.border,
                 backgroundColor: colors.white,
                 color: colors.text,
-                fontSize: "14px"
+                fontSize: "14px",
+                boxShadow: searchQuery.length >= 50 ? `0 0 0 1px ${colors.error}` : "none"
               }}
-              onFocus={(e) => e.target.style.borderColor = colors.primary}
-              onBlur={(e) => e.target.style.borderColor = colors.border}
+              onFocus={(e) => { if(searchQuery.length < 50) e.target.style.borderColor = colors.primary; }}
+              onBlur={(e) => e.target.style.borderColor = searchQuery.length >= 50 ? colors.error : colors.border}
             />
+            {searchQuery.length > 0 && (
+              <span 
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-xs"
+                style={{ color: searchQuery.length >= 50 ? colors.error : colors.secondary }}
+              >
+                {searchQuery.length}/50
+              </span>
+            )}
           </div>
+          {searchQuery.length >= 50 && (
+            <p className="text-xs mb-4" style={{ color: colors.error }}>
+              Maximum character limit reached.
+            </p>
+          )}
 
-          {/* Filter Toggle */}
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors"
-            style={{
-              backgroundColor: showFilters ? colors.primary : colors.background,
-              color: showFilters ? colors.white : colors.text,
-              border: `1px solid ${colors.border}`
-            }}
+          {/* Filter Dropdown (Now always visible) */}
+          <div 
+            className="mt-4 p-6 rounded-lg border grid md:grid-cols-2 gap-6"
+            style={{ borderColor: colors.border, backgroundColor: colors.white }}
           >
-            <Filter size={18} />
-            Filters
-          </button>
-
-          {/* Filter Dropdown */}
-          {showFilters && (
-            <div 
-              className="mt-4 p-6 rounded-lg border grid md:grid-cols-2 gap-6"
-              style={{ borderColor: colors.border, backgroundColor: colors.white }}
-            >
-              {/* Price Range Filter */}
+            {/* Price Range Filter */}
               <div>
                 <label 
                   className="block text-sm font-semibold mb-3"
@@ -248,9 +250,9 @@ export default function VenueSelection({ onNext, onBack }) {
                 <div className="space-y-2">
                   {[
                     { value: "all", label: "All Prices" },
-                    { value: "budget", label: "$ - Budget Friendly" },
-                    { value: "mid", label: "$$ - Mid-Range" },
-                    { value: "luxury", label: "$$$ & $$$$ - Luxury" }
+                    { value: "budget", label: "Under $1,000" },
+                    { value: "mid", label: "$1,000 - $5,000" },
+                    { value: "luxury", label: "$5,000+" }
                   ].map((option) => (
                     <label key={option.value} className="flex items-center gap-3 cursor-pointer">
                       <input
@@ -297,7 +299,6 @@ export default function VenueSelection({ onNext, onBack }) {
                 </div>
               </div>
             </div>
-          )}
         </div>
 
         {/* Results Count */}
@@ -473,36 +474,43 @@ export default function VenueSelection({ onNext, onBack }) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-4 pt-8 border-t" style={{ borderColor: colors.border }}>
-          <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors"
-            style={{
-              backgroundColor: colors.background,
-              color: colors.primary,
-              border: `2px solid ${colors.primary}`
-            }}
-            onMouseEnter={(e) => e.target.style.backgroundColor = "#E6F2FF"}
-            onMouseLeave={(e) => e.target.style.backgroundColor = colors.background}
-          >
-            <ChevronLeft size={20} />
-            Back
-          </button>
+        <div className="flex flex-col gap-4 pt-8 border-t" style={{ borderColor: colors.border }}>
+          {error && (
+            <div className="p-3 rounded-lg flex items-center justify-center font-semibold text-sm animate-pulse" 
+                 style={{ backgroundColor: "#FEE2E2", color: colors.error }}>
+              {error}
+            </div>
+          )}
+          <div className="flex gap-4">
+            <button
+              onClick={onBack}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-colors"
+              style={{
+                backgroundColor: colors.background,
+                color: colors.primary,
+                border: `2px solid ${colors.primary}`
+              }}
+              onMouseEnter={(e) => e.target.style.backgroundColor = "#E6F2FF"}
+              onMouseLeave={(e) => e.target.style.backgroundColor = colors.background}
+            >
+              <ChevronLeft size={20} />
+              Back
+            </button>
 
-          <button
-            onClick={handleNext}
-            disabled={!selectedVenue}
-            className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              backgroundColor: selectedVenue ? colors.primary : colors.border,
-              color: colors.white
-            }}
-            onMouseEnter={(e) => selectedVenue && (e.target.style.opacity = "0.9")}
-            onMouseLeave={(e) => selectedVenue && (e.target.style.opacity = "1")}
-          >
-            Next
-            <ChevronRight size={20} />
-          </button>
+            <button
+              onClick={handleNext}
+              className="flex items-center gap-2 px-6 py-3 rounded-lg font-semibold transition-all ml-auto"
+              style={{
+                backgroundColor: colors.primary,
+                color: colors.white
+              }}
+              onMouseEnter={(e) => { e.target.style.opacity = "0.9"; }}
+              onMouseLeave={(e) => { e.target.style.opacity = "1"; }}
+            >
+              Next
+              <ChevronRight size={20} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
