@@ -1,6 +1,6 @@
 import prisma from "../config/prisma.config.js";
 import { handleServerError } from "../utils/error.utils.js";
-import { reqParamId } from "../utils/reqBody.utils";
+import { reqParamId } from "../utils/reqBody.utils.js";
 
 export const getGuests = async (req, res) => {
   try {

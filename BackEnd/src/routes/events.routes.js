@@ -10,18 +10,18 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // GET    /api/events          — Get all events for the logged-in user
-router.get("/api/events",getEvents);
+router.get("/", getEvents);
 
 // POST   /api/events          — Create a new event
-router.post("/api/events", validate(eventSchema), createEvent)
+router.post("/", validate(eventSchema), createEvent)
 
 // GET    /api/events/:id      — Get a single event by ID
-router.get("/api/events/:id ", getEventById);
+router.get("/:id", getEventById);
 
 // PUT    /api/events/:id      — Update an event by ID
-router.put("/api/events/:id ", validate(eventSchema),updateEvent);
+router.put("/:id", validate(eventSchema), updateEvent);
 
 // DELETE /api/events/:id      — Delete an event by ID
-router.delete("/api/events/:id", deleteEvent);
+router.delete("/:id", deleteEvent);
 
 export default router;

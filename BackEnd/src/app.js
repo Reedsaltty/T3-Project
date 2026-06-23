@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import cookieParser from 'cookie-parser'
 import {logger} from './middlewares/logger.Middleware.js';
 import authRoutes from './routes/auth.routes.js';
 import eventsRoutes from './routes/events.routes.js';
@@ -9,6 +10,7 @@ import budgetRoutes from './routes/budget.routes.js';
 
 
 const app = express();
+app.use(cookieParser())
 
 // Enable CORS for frontend requests
 app.use(cors({ origin: 'http://localhost:5173', credentials: true }));

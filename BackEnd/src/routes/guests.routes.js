@@ -10,18 +10,18 @@ const router = express.Router();
 router.use(authMiddleware);
 
 // GET    /api/guests               — Get all attendees for an event (?eventId=)
-router.get("/api/guests", getGuests);
+router.get("/", getGuests);
 
 // POST   /api/guests               — Add a new guest/attendee to an event
-router.post("/api/guests", validate(guestSchema),addGuest ); // To be implemented
+router.post("/", validate(guestSchema), addGuest); // To be implemented
 
 // GET    /api/guests/:attendeeId   — Get a specific attendee by ID
-router.get("/api/guests/:attendeeId", getGuestById);
+router.get("/:attendeeId", getGuestById);
 
 // PUT    /api/guests/:attendeeId   — Update attendee details or RSVP status
-router.put("/api/guests/:attendeeId", validate(guestSchema), updateGuestInfo);
+router.put("/:attendeeId", validate(guestSchema), updateGuestInfo);
 
 // DELETE /api/guests/:attendeeId   — Remove an attendee from an event
-router.delete("/api/guests/:attendeeId", deleteGuest);
+router.delete("/:attendeeId", deleteGuest);
 
 export default router;

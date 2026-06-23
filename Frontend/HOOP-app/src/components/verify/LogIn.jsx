@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { loginUser } from "@/api/auth.api";
 
 export default function Login({ onSwitchView }) {
   const [view, setView] = useState("login"); // "login" or "reset_password"
@@ -16,17 +17,23 @@ export default function Login({ onSwitchView }) {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  function handleLogin(e) {
+  async function handleLogin(e) {
     e.preventDefault();
     if (!email || !password) { setError("Please fill in all fields."); return; }
-    setError("");
+    setError(null);
     setLoading(true);
+    try {
+      const data = await loginUser(email,password)
+      console.log('Login sucess', data)
+      setLoading(false)
+      navigate("/")
+    }catch(err){
+      console.error(err)
+      setError(err.response?.data?.message || "Failed to login")
+      setLoading(false)
+    
+    }
 
-    // Mock successful login
-    setTimeout(() => {
-      setLoading(false);
-      navigate("/");
-    }, 500);
   }
 
   function handleResetPassword(e) {

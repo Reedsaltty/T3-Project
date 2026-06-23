@@ -1,5 +1,5 @@
 import express from "express";
-import { register, login } from "../controllers/auth.controller.js";
+import { register, login, refresh } from "../controllers/auth.controller.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { registerSchema } from "../validation/auth.validation.js";
 import { validate } from "../middlewares/validate.middleware.js";
@@ -9,6 +9,7 @@ const router = express.Router();
 // Public Authentication Routes
 router.post("/register", validate(registerSchema), register);
 router.post("/login", login);
+router.post("/refresh", refresh);
 
 // Example of a Protected Route
 router.get("/profile", authMiddleware, (req, res) => {

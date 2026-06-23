@@ -91,3 +91,20 @@ export const deleteEvent = async (req, res) => {
     handleServerError(res, err, "Error delete event");
   }
 };
+
+
+
+export const getBudget = async (req, res) => {
+  try {
+    const budget = await prisma.event.budget.findUnique({
+      where:{
+        eventId : parseInt(reqParamId(req))
+      }
+    })
+    if(!budget){res.status(201).json({message : "Budget is not set" }); return }
+    res.status(201).json(budget)
+
+  }catch(err){
+    handleServerError(res, err,"Fetching budget data incomplete")
+  }
+}

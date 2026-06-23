@@ -6,7 +6,7 @@ export const validate = (schema) => (req, res, next) => {
     });
 
     if (!result.success) {
-        const errors = result.error.errors.map((err) => ({
+        const errors = result.error.issues.map((err) => ({
             field: err.path.join('.').replace('body.', ''),
             message: err.message,
         }));
@@ -14,8 +14,6 @@ export const validate = (schema) => (req, res, next) => {
     }
 
     req.body = result.data.body;
-    req.query = result.data.query;
-    req.params = result.data.params;
 
     next();
 };

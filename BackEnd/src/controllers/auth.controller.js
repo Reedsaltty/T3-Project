@@ -1,5 +1,7 @@
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 import prisma from "../config/prisma.config.js";
+import { jwtConfig } from "../config/jwt.js";
 import { generateAccessToken, generateRefreshToken } from "../utils/jwt.utils.js";
 
 export const register = async (req, res) => {
@@ -74,6 +76,41 @@ export const  resetPassWord = async (req, res) => {
 
     } catch (err) {
         console.error("Reset password Error:", err)
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export const refresh = async (req, res) => {
+    try {
+        // 1. Read the refreshToken from the cookie
+        const token = req.cookies.refreshToken;
+        if (!token) {
+            return res.status(401).json({ message: "No refresh token provided" });
+        }
+
+        // 2. Verify the refreshToken using the refresh secret
+        let decoded;
+        try {
+            decoded = jwt.verify(token, jwtConfig.refreshSecret);
+        } catch (err) {
+            return res.status(403).json({ message: "Invalid or expired refresh token. Please log in again." });
+        }
+
+        // 3. Issue a brand new accessToken
+        const newAccessToken = generateAccessToken(decoded);
+
+        // 4. Set the new accessToken as a cookie
+        res.cookie("accessToken", newAccessToken, {
+            httpOnly: true,
+            secure: false,   // set to true in production (HTTPS)
+            sameSite: 'lax',
+            path: '/'
+        });
+
+        res.status(200).json({ message: "Access token refreshed successfully" });
+
+    } catch (error) {
+        console.error("Refresh Error:", error);
         res.status(500).json({ message: "Internal server error" });
     }
 }

@@ -15,41 +15,41 @@ router.use(authMiddleware);
  * @desc    Get all available venues
  * @access  Private
  */
-router.get("/api/venues", getVenue);
-
-/**
- * @route   GET /api/venues/:venueId
- * @desc    Get a specific venue by its ID
- * @access  Private
- */
-router.get("/api/venues/:venueId", getVenueById);
+router.get("/", getVenue);
 
 /**
  * @route   GET /api/venues/booking
  * @desc    Get venue booking information for a specific event
  * @access  Private
  */
-router.get("/api/venues/booking", getBookingVenue);
+router.get("/booking", getBookingVenue);
+
+/**
+ * @route   GET /api/venues/:venueId
+ * @desc    Get a specific venue by its ID
+ * @access  Private
+ */
+router.get("/:venueId", getVenueById);
 
 /**
  * @route   POST /api/venues
  * @desc    Create and set up a new venue
  * @access  Private
  */
-router.post("/api/venues", validate(venueSchema), setUpVenue);
+router.post("/", validate(venueSchema), setUpVenue);
 
 /**
  * @route   PUT /api/venues/:venueId
  * @desc    Update an existing venue's details
  * @access  Private
  */
-router.put("/api/venues/:venueId", validate(venueSchema), updateVenue);
+router.put("/:venueId", validate(venueSchema), updateVenue);
 
 /**
  * @route   DELETE /api/venues/:venueId
  * @desc    Delete a venue from the platform
  * @access  Private
  */
-router.delete("/api/venues/:venueId", deleteVenue);
+router.delete("/:venueId", deleteVenue);
 
 export default router;
