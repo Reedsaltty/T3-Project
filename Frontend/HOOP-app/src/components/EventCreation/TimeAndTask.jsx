@@ -2,20 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Clock } from "lucide-react";
+import { useEventContext } from "./EventContext";
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Clock, Users, MapPin, Calendar, ListTodo, Zap } from "lucide-react";
+import { VENUES } from "./venuesData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 const CATEGORIES = ["Ceremony", "Reception", "Entertainment", "Catering", "Logistics", "Other"];
 
-const defaultActivities = [
-  { id: 1, name: "Guest Arrival",  time: "18:00", duration: 30, category: "Logistics",      desc: "Welcome guests at the entrance." },
-  { id: 2, name: "Dinner Service", time: "18:30", duration: 90, category: "Catering",       desc: "Catered 3-course meal." },
-  { id: 3, name: "Cake Cutting",   time: "20:00", duration: 30, category: "Ceremony",       desc: "Birthday cake and desserts." },
-  { id: 4, name: "DJ & Dancing",   time: "20:30", duration: 150,category: "Entertainment", desc: "Live DJ set to close the night." },
-];
 
 let nextId = 5;
 
@@ -26,9 +23,13 @@ const slideIn = {
 
 export default function TimeAndTask() {
   const navigate = useNavigate();
-  const [eventDate, setEventDate] = useState("");
-  const [activities, setActivities] = useState(defaultActivities);
+  const { 
+    activities, setActivities, 
+    eventDate, setEventDate,
+    form, guests, selectedVenue, resetEventData 
+  } = useEventContext();
   const [adding, setAdding] = useState(false);
+  const [showReview, setShowReview] = useState(false);
   const [newAct, setNewAct] = useState({ name: "", time: "", duration: 30, category: "Other", desc: "" });
 
   function addActivity() {
@@ -65,7 +66,13 @@ export default function TimeAndTask() {
               { n: 3, label: "Time & Task",     done: false, active: true  },
             ].map((s, i, arr) => (
               <div key={s.n} className="flex items-center flex-1">
-                <div className="flex items-center gap-3">
+                <div 
+                  className={`flex items-center gap-3 ${s.done ? "cursor-pointer hover:opacity-80" : ""}`}
+                  onClick={() => {
+                    if (s.n === 1) navigate("/event-creation/setup");
+                    if (s.n === 2) navigate("/event-creation/venue");
+                  }}
+                >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-all ${
                     s.active ? "bg-blue-600 text-white shadow-[0_0_0_4px_rgba(37,99,235,0.15)]" :
                     s.done ? "bg-emerald-500 text-white" :
@@ -229,10 +236,91 @@ export default function TimeAndTask() {
             <Button variant="outline" onClick={() => navigate("/event-creation/venue")} className="gap-2">
               <ArrowLeft size={16} /> Back
             </Button>
-            <Button onClick={() => navigate("/home")} className="gap-2 px-6">
-              <CheckCircle2 size={16} /> Create Event
+            <Button onClick={() => setShowReview(true)} className="gap-2 px-6 bg-blue-600 hover:bg-blue-500 text-white">
+              <CheckCircle2 size={16} /> Review & Create
             </Button>
           </div>
+
+          <Dialog open={showReview} onOpenChange={setShowReview}>
+            <DialogContent className="sm:max-w-[550px] bg-white p-0 overflow-hidden border-0 shadow-2xl rounded-3xl">
+              
+              {/* Decorative Header Background */}
+              <div className="bg-blue-600 h-32 relative flex items-center justify-center overflow-hidden">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/4"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full blur-2xl translate-y-1/3 -translate-x-1/4"></div>
+                <div className="relative z-10 text-center px-6 mt-4">
+                  <h2 className="text-3xl font-heading font-bold text-white tracking-tight">Review Event</h2>
+                  <p className="text-blue-100 mt-1 font-medium">Almost there! Confirm your details.</p>
+                </div>
+              </div>
+
+              <div className="px-8 pb-8 pt-6 flex flex-col gap-6">
+                
+                {/* Highlighted Event Title Card */}
+                <div className="bg-gradient-to-r from-blue-50 to-blue-100/50 border border-blue-100 rounded-2xl p-5 flex items-start gap-4 shadow-sm">
+                  <div className="w-14 h-14 bg-blue-600 rounded-xl shadow-md flex items-center justify-center shrink-0 text-white">
+                    <Zap size={28} strokeWidth={2.5} fill="currentColor" />
+                  </div>
+                  <div className="pt-0.5 flex flex-col justify-center h-14">
+                    <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{form?.title || "Untitled Event"}</h3>
+                    <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600/10 text-blue-700 uppercase tracking-widest w-fit">
+                      {form?.type || "Unspecified"}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Details Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-1 hover:border-blue-200 transition-colors group">
+                    <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">
+                      <Users size={16} className="text-purple-500 group-hover:scale-110 transition-transform" /> Guests
+                    </div>
+                    <span className="text-2xl font-bold text-gray-900 leading-none">{guests?.length || 0}</span>
+                    <span className="text-xs font-medium text-gray-400 mt-1">people invited</span>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-1 hover:border-blue-200 transition-colors group">
+                    <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">
+                      <MapPin size={16} className="text-emerald-500 group-hover:scale-110 transition-transform" /> Venue
+                    </div>
+                    <span className="text-xl font-bold text-gray-900 leading-tight truncate">
+                      {selectedVenue 
+                        ? VENUES.find(v => v.id === selectedVenue)?.name || `Venue #${selectedVenue}`
+                        : "None"}
+                    </span>
+                    <span className="text-xs font-medium text-gray-400 mt-1">selected location</span>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-1 hover:border-blue-200 transition-colors group">
+                    <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">
+                      <Calendar size={16} className="text-amber-500 group-hover:scale-110 transition-transform" /> Date
+                    </div>
+                    <span className="text-lg font-bold text-gray-900 leading-tight">{eventDate ? new Date(eventDate).toLocaleDateString() : "Not set"}</span>
+                    <span className="text-xs font-medium text-gray-400 mt-1">scheduled for</span>
+                  </div>
+
+                  <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-1 hover:border-blue-200 transition-colors group">
+                    <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">
+                      <ListTodo size={16} className="text-blue-500 group-hover:scale-110 transition-transform" /> Activities
+                    </div>
+                    <span className="text-2xl font-bold text-gray-900 leading-none">{activities?.length || 0}</span>
+                    <span className="text-xs font-medium text-gray-400 mt-1">planned in timeline</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
+                  <Button variant="outline" className="h-12 px-6 rounded-xl font-semibold" onClick={() => setShowReview(false)}>Cancel</Button>
+                  <Button className="h-12 px-8 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all hover:shadow-[0_0_25px_rgba(37,99,235,0.5)]" onClick={() => {
+                    setShowReview(false);
+                    resetEventData();
+                    navigate("/dashboard");
+                  }}>
+                    <CheckCircle2 size={18} className="mr-2" /> Confirm & Create
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
         </div>
       </main>

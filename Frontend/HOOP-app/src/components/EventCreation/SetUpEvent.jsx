@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
+import { useEventContext } from "./EventContext";
 import { ArrowLeft, ArrowRight, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,20 +16,11 @@ const slideIn = {
 
 export default function SetUpEvent() {
   const navigate = useNavigate();
+  const { form, setForm, guests, setGuests } = useEventContext();
   
-  // Event Form State
-  const [form, setForm] = useState({
-    title: "", 
-    type: "", 
-    startTime: "", 
-    endTime: "", 
-    attendance: "", 
-    budget: ""
-  });
   const [errors, setErrors] = useState({});
 
   // Guest List State
-  const [guests, setGuests] = useState([]);
   const [guestInput, setGuestInput] = useState({ email: "", name: "" });
 
   function setField(field, val) {
@@ -139,7 +131,10 @@ export default function SetUpEvent() {
                     {/* Row 4 */}
                     <div className="space-y-2">
                       <Label htmlFor="budget" className="text-gray-700">Budget</Label>
-                      <Input id="budget" type="number" placeholder="฿" value={form.budget} onChange={e => setField("budget", e.target.value)} className="bg-white border-0 h-11" />
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">฿</span>
+                        <Input id="budget" type="number" placeholder="e.g. 5,000" value={form.budget} onChange={e => setField("budget", e.target.value)} className="bg-white border-0 h-11 pl-10" />
+                      </div>
                     </div>
                   </form>
                 </CardContent>
@@ -164,7 +159,7 @@ export default function SetUpEvent() {
                         placeholder="Example: johnDoe@email.com" 
                         value={guestInput.email}
                         onChange={e => setGuestInput({ ...guestInput, email: e.target.value })}
-                        className="bg-gray-400/30 border-0 h-11 text-gray-900 placeholder:text-gray-600" 
+                        className="bg-white border-0 h-11 text-gray-900 placeholder:text-gray-400" 
                       />
                     </div>
                     <div className="space-y-2 flex-1">
@@ -174,10 +169,10 @@ export default function SetUpEvent() {
                         placeholder="Example : John Doe" 
                         value={guestInput.name}
                         onChange={e => setGuestInput({ ...guestInput, name: e.target.value })}
-                        className="bg-gray-400/30 border-0 h-11 text-gray-900 placeholder:text-gray-600" 
+                        className="bg-white border-0 h-11 text-gray-900 placeholder:text-gray-400" 
                       />
                     </div>
-                    <Button type="submit" className="bg-gray-400 text-gray-900 hover:bg-gray-500 font-bold h-11 px-8">
+                    <Button type="submit" className="bg-blue-600 hover:bg-blue-500 text-white font-bold h-11 px-8">
                       Invite+
                     </Button>
                   </form>
@@ -190,7 +185,7 @@ export default function SetUpEvent() {
                     
                     {guests.length === 0 ? (
                       <div className="py-16 text-center">
-                        <p className="text-gray-600 text-lg">There 's seem to be no guest Yet</p>
+                        <p className="text-gray-600 text-lg">There are no guests yet.</p>
                       </div>
                     ) : (
                       <div className="max-h-[300px] overflow-y-auto">

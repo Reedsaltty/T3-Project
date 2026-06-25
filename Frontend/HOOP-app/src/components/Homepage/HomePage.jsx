@@ -95,7 +95,7 @@ export default function HomePage() {
                 <Button size="lg" onClick={() => navigate("/event-creation/setup")} className="gap-2">
                   Start Planning <ArrowRight size={18} />
                 </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate("/home")}>
+                <Button size="lg" variant="outline" onClick={() => navigate("/dashboard")}>
                   View Dashboard
                 </Button>
               </motion.div>

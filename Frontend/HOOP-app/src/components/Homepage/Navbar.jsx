@@ -47,10 +47,17 @@ export default function Navbar() {
         {/* CTA */}
         <div className="flex items-center gap-4">
           <Button 
-            className="hidden md:flex" 
-            onClick={() => navigate("/event-creation/setup")}
+            variant="ghost"
+            className="hidden md:flex font-semibold text-gray-900 hover:bg-gray-100" 
+            onClick={() => navigate("/signup")}
           >
-            Create Event
+            Sign up
+          </Button>
+          <Button 
+            className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6" 
+            onClick={() => navigate("/login")}
+          >
+            Log in
           </Button>
           <button
             className="md:hidden p-2 text-gray-600 hover:bg-gray-50 rounded-md"
@@ -75,12 +82,21 @@ export default function Navbar() {
               {link.label}
             </NavLink>
           ))}
-          <Button 
-            className="w-full mt-2"
-            onClick={() => { setMenuOpen(false); navigate("/event-creation/setup"); }}
-          >
-            Create Event
-          </Button>
+          <div className="flex flex-col gap-2 mt-2">
+            <Button 
+              variant="ghost"
+              className="w-full font-semibold text-gray-900 hover:bg-gray-100"
+              onClick={() => { setMenuOpen(false); navigate("/signup"); }}
+            >
+              Sign up
+            </Button>
+            <Button 
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full"
+              onClick={() => { setMenuOpen(false); navigate("/login"); }}
+            >
+              Log in
+            </Button>
+          </div>
         </div>
       )}
     </header>

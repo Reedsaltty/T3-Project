@@ -11,14 +11,16 @@ import EventOverview  from './components/EventOverview/EventOverview';
 import PageTransition from './components/PageTransition';
 import About          from './components/Homepage/About';
 import Contact        from './components/Homepage/Contact';
+import { EventProvider } from './components/EventCreation/EventContext';
 import './App.css';
 
 function App() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
+    <EventProvider>
+      <AnimatePresence mode="wait">
+        <Routes location={location} key={location.pathname}>
         {/* Auth */}
         <Route path="/" element={<PageTransition><Verify /></PageTransition>} />
 
@@ -41,8 +43,9 @@ function App() {
 
         {/* Fallback */}
         <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </AnimatePresence>
+        </Routes>
+      </AnimatePresence>
+    </EventProvider>
   );
 }
 

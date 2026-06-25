@@ -2,22 +2,13 @@ import { useState, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
-import { ArrowLeft, Edit3, Settings, Share2, Download, Search, Check, X, HelpCircle, Plus } from "lucide-react";
+import { ArrowLeft, Edit3, Settings, Share2, Download, Search, Check, X, HelpCircle, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-
-const mockEvent = {
-  id: "1",
-  name: "Alice's 30th Birthday Bash",
-  status: "Upcoming",
-  date: "August 15, 2026",
-  time: "18:00 - 23:30",
-  venue: "Rooftop Garden Hub",
-  budget: 50000,
-  spent: 32500,
-};
+import { useEventContext } from "../EventCreation/EventContext";
+import { mockEventsData } from "../../data/mockEvents";
 
 const defaultGuests = [
   { id: 1, name: "Charlie Davis",   email: "charlie.d@example.com", rsvp: "attending", table: "A1" },
@@ -36,8 +27,43 @@ const rsvpStyles = {
 export default function EventOverview() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { setForm, setEventDate, setSelectedVenue } = useEventContext();
   const [guests, setGuests] = useState(defaultGuests);
   const [search, setSearch] = useState("");
+
+  const currentEventData = mockEventsData.find(e => e.id.toString() === id) || mockEventsData[0];
+  const mockEvent = {
+    id: currentEventData.id.toString(),
+    name: currentEventData.name,
+    status: currentEventData.status.charAt(0).toUpperCase() + currentEventData.status.slice(1),
+    date: currentEventData.date,
+    time: currentEventData.time,
+    venue: currentEventData.venue,
+    budget: currentEventData.totalBudget,
+    spent: currentEventData.totalBudget * (currentEventData.budget / 100),
+  };
+
+  const handleEditClick = () => {
+    setForm({
+      title: mockEvent.name,
+      type: currentEventData.type,
+      startTime: mockEvent.time.split(" - ")[0] || "",
+      endTime: mockEvent.time.split(" - ")[1] || "",
+      attendance: currentEventData.guests.toString(),
+      budget: mockEvent.budget.toString(),
+    });
+    setEventDate(mockEvent.date);
+    setSelectedVenue({ name: mockEvent.venue, address: "", rating: 0 });
+    navigate("/event-creation/setup");
+  };
+
+  const handleDeleteClick = () => {
+    if (window.confirm("Are you sure you want to delete this event?")) {
+      const index = mockEventsData.findIndex(e => e.id.toString() === id);
+      if (index > -1) mockEventsData.splice(index, 1);
+      navigate("/dashboard");
+    }
+  };
 
   const filteredGuests = guests.filter(g => 
     g.name.toLowerCase().includes(search.toLowerCase()) || 
@@ -67,7 +93,7 @@ export default function EventOverview() {
       <Navbar />
       
       {/* Top Action Bar */}
-      <div className="bg-white border-b border-gray-200 sticky top-[64px] z-40">
+      <div className="bg-white border-b border-gray-200 sticky top-16 z-40">
         <div className="container mx-auto px-6 h-16 flex items-center justify-between">
           <Button variant="ghost" onClick={() => navigate("/dashboard")} className="gap-2 -ml-3 text-gray-500">
             <ArrowLeft size={16} /> Dashboard
@@ -75,7 +101,8 @@ export default function EventOverview() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" title="Settings"><Settings size={16} /></Button>
             <Button variant="outline" size="icon" title="Share"><Share2 size={16} /></Button>
-            <Button className="gap-2"><Edit3 size={16} /> Edit Event</Button>
+            <Button variant="outline" className="gap-2 text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200" onClick={handleDeleteClick}><Trash2 size={16} /> Delete</Button>
+            <Button className="gap-2" onClick={handleEditClick}><Edit3 size={16} /> Edit Event</Button>
           </div>
         </div>
       </div>
