@@ -16,7 +16,6 @@ export const getVenue = async (req, res) => {
       res.status(204).json({ message: "No venues available right now" });
       return;
     }
-
     res.status(201).json(venues);
   } catch (err) {
     handleServerError(res, err, "Error fetching evenues");

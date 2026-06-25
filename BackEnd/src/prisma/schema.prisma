@@ -23,6 +23,7 @@ model User {
   eventMembers    EventMember[]
   tasks           Task[]
   notifications   Notification[]
+  venues          Venue[]
 
   @@map("users")
 }
@@ -88,6 +89,7 @@ model Venue {
   capacity     Int
   contactEmail String @db.VarChar(150)
   ownerId      Int? // Optional: links to a User if venue owner has an account
+  owner        User?  @relation(fields: [ownerId], references: [userId])
 
   bookingRequests VenueBooking[]
 

@@ -5,7 +5,7 @@ import { reqParamId } from "../utils/reqBody.utils.js";
 // CREATE an event
 export const createEvent = async (req, res) => {
   try {
-    const { eventTitle, eventType, eventDate, eventTime, budget } = req.body;
+    const { eventTitle, eventType, eventDate, eventTime, budget } = await req.body;
     const newEvent = await prisma.event.create({
       data: {
         eventTitle: toString(eventTitle),
@@ -106,5 +106,14 @@ export const getBudget = async (req, res) => {
 
   }catch(err){
     handleServerError(res, err,"Fetching budget data incomplete")
+  }
+}
+
+export const createTimeLine  = async  (req, res) => {
+  try{
+    const [ ]
+
+  }catch(err){
+    handleServerError(res, err , "Internal server error")
   }
 }
