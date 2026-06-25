@@ -25,6 +25,9 @@ export default function Login({ onSwitchView }) {
     try {
       const data = await loginUser(email,password)
       console.log('Login sucess', data)
+      if (data.user) {
+        localStorage.setItem("user", JSON.stringify(data.user));
+      }
       setLoading(false)
       navigate("/")
     }catch(err){

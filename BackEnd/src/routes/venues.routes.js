@@ -18,15 +18,29 @@ router.use(authMiddleware);
 router.get("/", getVenue);
 
 /**
- * @route   GET /api/venues/booking
+ * @route   GET /api/venues/booking/:eventId
  * @desc    Get venue booking information for a specific event
  * @access  Private
  */
-router.get("/booking", getBookingVenue);
+router.get("/booking/:eventId", getBookingVenue);
+
+/**
+ * @route   GET /api/venues/mine
+ * @desc    Get all venues owned by the current user
+ * @access  Private (venue_owner)
+ */
+router.get("/mine", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
+
+/**
+ * @route   GET /api/venues/:venueId/details
+ * @desc    Get full details for a specific venue
+ * @access  Private
+ */
+router.get("/:venueId/details", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
 
 /**
  * @route   GET /api/venues/:venueId
- * @desc    Get a specific venue by its ID
+ * @desc    Get a specific venue by its ID (partial view)
  * @access  Private
  */
 router.get("/:venueId", getVenueById);
@@ -37,6 +51,13 @@ router.get("/:venueId", getVenueById);
  * @access  Private
  */
 router.post("/", validate(venueSchema), setUpVenue);
+
+/**
+ * @route   POST /api/venues/:venueId/book
+ * @desc    Create a booking request for a venue
+ * @access  Private
+ */
+router.post("/:venueId/book", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
 
 /**
  * @route   PUT /api/venues/:venueId

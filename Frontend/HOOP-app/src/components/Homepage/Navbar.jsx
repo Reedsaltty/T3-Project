@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import { Menu, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,20 @@ const navLinks = [
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
 
-  // Mock logged in state
-  const isLoggedIn = false;
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user from local storage");
+      }
+    }
+  }, []);
+
+  const isLoggedIn = !!user;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-gray-100">
@@ -55,11 +66,11 @@ export default function Navbar() {
               <Button onClick={() => navigate("/login")}>Sign Up</Button>
             </div>
           ) : (
-            <div className="hidden md:flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm">
-                JD
+            <div className="hidden md:flex items-center gap-3 cursor-pointer" onClick={() => navigate("/dashboard")}>
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm uppercase">
+                {user?.username ? user.username.substring(0, 2) : "U"}
               </div>
-              <span className="text-sm font-semibold text-gray-700">John Doe</span>
+              <span className="text-sm font-semibold text-gray-700">{user?.username || "User"}</span>
             </div>
           )}
           <button
@@ -91,11 +102,11 @@ export default function Navbar() {
               <Button className="w-full" onClick={() => { setMenuOpen(false); navigate("/login"); }}>Sign Up</Button>
             </div>
           ) : (
-            <div className="flex items-center gap-3 mt-2 border-t border-gray-100 pt-4 px-2">
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-base">
-                JD
+            <div className="flex items-center gap-3 mt-2 border-t border-gray-100 pt-4 px-2 cursor-pointer" onClick={() => { setMenuOpen(false); navigate("/dashboard"); }}>
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-base uppercase">
+                {user?.username ? user.username.substring(0, 2) : "U"}
               </div>
-              <span className="text-base font-semibold text-gray-700">John Doe</span>
+              <span className="text-base font-semibold text-gray-700">{user?.username || "User"}</span>
             </div>
           )}
         </div>

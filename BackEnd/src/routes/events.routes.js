@@ -3,6 +3,7 @@ import { authMiddleware } from "../middlewares/authMiddleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { eventSchema } from "../validation/event.validation.js";
 import { getEventById, createEvent, updateEvent, deleteEvent, getEvents  } from "../controllers/event.controller.js";
+import activityRoutes from "./activity.routes.js";
 
 const router = express.Router();
 
@@ -23,5 +24,8 @@ router.put("/:id", validate(eventSchema), updateEvent);
 
 // DELETE /api/events/:id      — Delete an event by ID
 router.delete("/:id", deleteEvent);
+
+// Attach activity routes for a specific event
+router.use("/:eventId/activities", activityRoutes);
 
 export default router;

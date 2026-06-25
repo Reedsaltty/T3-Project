@@ -7,6 +7,9 @@ import eventsRoutes from './routes/events.routes.js';
 import venuesRoutes from './routes/venues.routes.js';
 import guestsRoutes from './routes/guests.routes.js';
 import budgetRoutes from './routes/budget.routes.js';
+import venueApplicationRoutes from './routes/venue-application.routes.js';
+import adminRoutes from './routes/admin.routes.js';
+import notificationRoutes from './routes/notification.routes.js';
 
 
 const app = express();
@@ -25,6 +28,9 @@ app.use('/api/events', eventsRoutes);
 app.use('/api/venues', venuesRoutes);
 app.use('/api/guests', guestsRoutes);
 app.use('/api/budget', budgetRoutes);
+app.use('/api/venue-applications', venueApplicationRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 
 export default app;

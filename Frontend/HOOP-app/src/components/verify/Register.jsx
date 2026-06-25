@@ -3,6 +3,8 @@ import { Eye, EyeOff, CheckCircle2, XCircle, Circle, ArrowRight } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useNavigate } from "react-router-dom";
+import { registerUser } from "@/api/auth.api";
 
 export default function Register({ onSwitchView }) {
   const [name, setName] = useState("");
@@ -11,7 +13,8 @@ export default function Register({ onSwitchView }) {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  // const navigate = useNavigate();
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
   const hasMinLength  = password.length >= 8;
   const hasUpperCase  = /[A-Z]/.test(password);
   const hasSpecialChar = /[^a-zA-Z0-9]/.test(password);
@@ -22,13 +25,24 @@ export default function Register({ onSwitchView }) {
     { label: "One special character",   met: hasSpecialChar },
   ];
 
-  function handleRegister(e) {
+  async function handleRegister(e) {
     e.preventDefault();
     if (!name || !email || !password) { setError("Please fill in all fields."); return; }
+    if (!hasMinLength || !hasUpperCase || !hasSpecialChar) {
+      setError("Password does not meet the requirements."); return;
+    }
     setError("");
+    setSuccess("");
     setLoading(true);
-    setTimeout(() => { setLoading(false); alert(`Account created for ${email}!`); }, 800);
-    // navigate("/home");
+    try {
+      await registerUser({ username: name, email, password });
+      setSuccess("Account created! Redirecting to login…");
+      setTimeout(() => navigate("/login"), 1500);
+    } catch (err) {
+      setError(err.response?.data?.message || "Registration failed. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
@@ -99,6 +113,7 @@ export default function Register({ onSwitchView }) {
         </ul>
 
         {error && <p className="text-sm text-red-500 font-medium mt-1">{error}</p>}
+        {success && <p className="text-sm text-emerald-600 font-medium mt-1">{success}</p>}
 
         <Button
           id="register-submit"
