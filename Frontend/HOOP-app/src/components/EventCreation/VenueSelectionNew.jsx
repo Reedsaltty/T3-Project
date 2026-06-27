@@ -2,18 +2,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
+import { useEventContext } from "./EventContext";
 import { ArrowLeft, ArrowRight, MapPin, Users, DollarSign, Star, Search, CheckCircle2, Filter } from "lucide-react";
+import { VENUES } from "./venuesData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-const VENUES = [
-  { id: 1, name: "The Grand Ballroom",     address: "123 Main St, Bangkok",    capacity: 400, price: "$$$",  rating: 4.7, tags: ["wedding","birthday","conference"] },
-  { id: 2, name: "Rooftop Garden Hub",     address: "456 Sky Rd, Bangkok",     capacity: 100, price: "$$",   rating: 4.4, tags: ["birthday","gathering","meeting"] },
-  { id: 3, name: "City Conference Hall",   address: "789 Central Ave, Bangkok",capacity: 250, price: "$$",   rating: 4.2, tags: ["meeting","conference"] },
-  { id: 4, name: "Beachside Pavilion",     address: "001 Seaside Ln, Phuket",  capacity: 150, price: "$$$",  rating: 4.8, tags: ["wedding","gathering","birthday"] },
-  { id: 5, name: "Cozy Event Loft",        address: "22 Alley 5, Chiang Mai",  capacity:  60, price: "$",    rating: 4.1, tags: ["birthday","gathering","meeting"] },
-  { id: 6, name: "Riverside Terrace",      address: "8 River Rd, Bangkok",     capacity: 200, price: "$$$",  rating: 4.6, tags: ["wedding","gathering","conference"] },
-];
+
 
 const slideIn = {
   hidden: { opacity: 0, x: 20 },
@@ -32,8 +27,8 @@ const itemAnim = {
 
 export default function VenueSelectionNew() {
   const navigate = useNavigate();
+  const { selectedVenue: selected, setSelectedVenue: setSelected } = useEventContext();
   const [search, setSearch] = useState("");
-  const [selected, setSelected] = useState(null);
   const [showFilters, setShowFilters] = useState(false);
   
   // Filters
@@ -73,7 +68,12 @@ export default function VenueSelectionNew() {
               { n: 3, label: "Time & Task",     active: false, done: false },
             ].map((s, i, arr) => (
               <div key={s.n} className="flex items-center flex-1">
-                <div className="flex items-center gap-3">
+                <div 
+                  className={`flex items-center gap-3 ${s.done ? "cursor-pointer hover:opacity-80" : ""}`}
+                  onClick={() => {
+                    if (s.n === 1) navigate("/event-creation/setup");
+                  }}
+                >
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold shrink-0 transition-all ${
                     s.active ? "bg-blue-600 text-white shadow-[0_0_0_4px_rgba(37,99,235,0.15)]" :
                     s.done ? "bg-emerald-500 text-white" :
