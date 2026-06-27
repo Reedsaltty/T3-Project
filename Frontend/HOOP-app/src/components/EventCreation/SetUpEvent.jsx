@@ -214,7 +214,7 @@ export default function SetUpEvent() {
 
             {/* Navigation Buttons */}
             <div className="flex items-center justify-between pt-6">
-              <Button variant="outline" type="button" onClick={() => navigate("/home")} className="gap-2">
+              <Button variant="outline" type="button" onClick={() => navigate("/")} className="gap-2">
                 <ArrowLeft size={16} /> Cancel
               </Button>
               <Button type="button" onClick={handleNext} className="gap-2 px-6">

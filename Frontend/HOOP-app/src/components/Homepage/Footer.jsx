@@ -14,10 +14,8 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12 pb-12">
           {/* Brand */}
           <div className="flex flex-col gap-4">
-            <Link to="/home" className="flex items-center gap-2 w-fit group">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center transition-transform group-hover:scale-105">
-                <Zap size={16} fill="white" strokeWidth={0} />
-              </div>
+            <Link to="/" className="flex items-center gap-2 w-fit group">
+              <img src="/favicon.svg" alt="Hoop Logo" className="w-8 h-8 transition-transform group-hover:scale-105" />
               <span className="font-heading text-xl font-bold text-white tracking-tight">Hoop</span>
             </Link>
             <p className="text-sm text-white/50 leading-relaxed max-w-xs">

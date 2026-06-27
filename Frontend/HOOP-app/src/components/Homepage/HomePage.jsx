@@ -58,6 +58,17 @@ const staggerContainer = {
 export default function HomePage() {
   const navigate = useNavigate();
 
+  // Mock logged in state
+  const isLoggedIn = false;
+
+  const handleStartPlanning = () => {
+    if (isLoggedIn) {
+      navigate("/event-creation/setup");
+    } else {
+      navigate("/login");
+    }
+  };
+
   return (
     <div className="flex flex-col min-h-screen bg-white">
       <Navbar />
@@ -92,11 +103,8 @@ export default function HomePage() {
               </motion.p>
               
               <motion.div variants={fadeInUp} className="flex flex-wrap gap-3 mt-2">
-                <Button size="lg" onClick={() => navigate("/event-creation/setup")} className="gap-2">
+                <Button size="lg" onClick={handleStartPlanning} className="gap-2">
                   Start Planning <ArrowRight size={18} />
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => navigate("/dashboard")}>
-                  View Dashboard
                 </Button>
               </motion.div>
 
@@ -240,7 +248,7 @@ export default function HomePage() {
           <div className="flex flex-col items-center text-center gap-6 max-w-2xl mx-auto">
             <h2 className="text-3xl md:text-5xl font-heading font-bold text-white leading-tight">Ready to plan your next event?</h2>
             <p className="text-blue-100 text-lg">Join hundreds of hosts who simplified their event planning with Hoop.</p>
-            <Button size="lg" variant="secondary" onClick={() => navigate("/event-creation/setup")} className="mt-4 gap-2 text-blue-600">
+            <Button size="lg" variant="secondary" onClick={handleStartPlanning} className="mt-4 gap-2 text-blue-600">
               Get Started — It's Free <ArrowRight size={18} />
             </Button>
           </div>

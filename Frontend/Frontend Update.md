@@ -3,9 +3,11 @@
 This is the current map of all page views and their corresponding routes in the React application (configured in [App.jsx](file:///Users/leaphourleu/Storage/Y2SE/T3/T3%20Project%20/T3-Project/Frontend/HOOP-app/src/App.jsx)):
 
 ---
+## overall
+create a loading structure when the website currently loading
 
 ## 🔐 1. Authentication & Verification
-
+The authentication part is fine but i also want to add the reset pass word and you can login wit other like gmail or tiktok
 
 ---
 
@@ -19,13 +21,12 @@ at  the footer display the actual logo of the platform
 ---
 
 ## 📊 3. Core Dashboard
-
+y
 
 ---
 
 ## 🛠️ 4. Event Creation Flow
-This is a step-by-step wizard to set up a new event:
-
+X
 
 ---
 

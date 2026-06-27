@@ -236,8 +236,8 @@ export default function TimeAndTask() {
             <Button variant="outline" onClick={() => navigate("/event-creation/venue")} className="gap-2">
               <ArrowLeft size={16} /> Back
             </Button>
-            <Button onClick={() => setShowReview(true)} className="gap-2 px-6 bg-blue-600 hover:bg-blue-500 text-white">
-              <CheckCircle2 size={16} /> Review & Create
+            <Button onClick={() => navigate("/")} className="gap-2 px-6">
+              <CheckCircle2 size={16} /> Create Event
             </Button>
           </div>
 

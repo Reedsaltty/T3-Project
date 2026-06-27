@@ -278,7 +278,7 @@ Second step of event creation - choose a venue from curated recommendations.
 #### User Actions
 * Browse venues
 * Filter/search
-* Select venue
+* Request booking for selected venue (submits request to venue contact email and sets booking status to pending)
 * Go back
 * Proceed to Time and Task
 
@@ -365,7 +365,7 @@ Comprehensive view of a created event with all details, guest management, and bu
   - Share Event
   - Delete Event
 * Timeline preview (vertical timeline snippet)
-* Vendor/Venue info card
+* Vendor/Venue Booking Status card (shows selected venue, request date, response notes, and status: 🟡 Pending, 🟢 Approved, 🔴 Rejected, ⚪ Cancelled)
 * Notes/Comments section (for co-hosts)
 * Task checklist (Pre-event checklist)
 

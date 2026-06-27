@@ -1,5 +1,4 @@
 # Frontend Dockerfile - Multi-stage build
-# Stage 1: Build
 FROM node:22-alpine AS builder
 WORKDIR /app
 
@@ -15,29 +14,25 @@ COPY . .
 # Build application
 RUN npm run build
 
-# Stage 2: Production image with Nginx
-FROM nginx:1.27-alpine
-WORKDIR /usr/share/nginx/html
+# Stage 2: Production runtime
+FROM node:22-alpine
+WORKDIR /app
 
-# Copy built assets from builder stage
-COPY --from=builder /app/dist .
+# FIX: Update npm globally to patch the bundled picomatch vulnerability
+RUN npm install -g npm@latest
 
-# Copy Nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Install a simple HTTP server to serve the built app
+RUN npm install -g serve
 
-# Set proper permissions
-RUN chown -R nginx:nginx /usr/share/nginx/html && \
-    chmod -R 755 /usr/share/nginx/html
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
 
-# Switch to non-root user
-USER nginx
+# Copy built app from builder
+COPY --from=builder --chown=nodejs:nodejs /app/dist ./dist
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD wget --quiet --tries=1 --spider http://localhost:3001/index.html || exit 1
+USER nodejs
 
-# Expose port
-EXPOSE 3001
+EXPOSE 5173
 
-# Start Nginx
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["serve", "-s", "dist", "-l", "5173"]
+

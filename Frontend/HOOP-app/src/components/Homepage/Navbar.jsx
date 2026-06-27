@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, NavLink } from "react-router-dom";
 import { Menu, X, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const navLinks = [
-  { label: "Home",      to: "/home" },
+  { label: "Home",      to: "/" },
   { label: "Inventory", to: "/inventory" },
   { label: "About",     to: "/about" },
   { label: "Contact",   to: "/contact" },
@@ -13,12 +13,26 @@ const navLinks = [
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (e) {
+        console.error("Failed to parse user from local storage");
+      }
+    }
+  }, []);
+
+  const isLoggedIn = !!user;
 
   return (
     <header className="sticky top-0 z-50 w-full bg-white/90 backdrop-blur-md border-b border-gray-100">
-      <div className="container mx-auto px-6 flex items-center justify-between h-16">
+      <div className="container mx-auto px-6 flex items-center justify-between h-20">
         {/* Logo */}
-        <button className="flex items-center gap-2 group" onClick={() => navigate("/home")}>
+        <button className="flex items-center gap-2 group" onClick={() => navigate("/")}>
           <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white transition-transform group-hover:scale-105">
             <Zap size={16} fill="white" strokeWidth={0} />
           </div>
@@ -32,7 +46,7 @@ export default function Navbar() {
               key={link.to}
               to={link.to}
               className={({ isActive }) => 
-                `px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                `px-3 py-2 rounded-md text-base font-medium transition-colors ${
                   isActive 
                     ? "text-blue-600 bg-blue-50" 
                     : "text-gray-500 hover:text-gray-900 hover:bg-gray-50"
@@ -46,19 +60,19 @@ export default function Navbar() {
 
         {/* CTA */}
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost"
-            className="hidden md:flex font-semibold text-gray-900 hover:bg-gray-100" 
-            onClick={() => navigate("/signup")}
-          >
-            Sign up
-          </Button>
-          <Button 
-            className="hidden md:flex bg-blue-600 hover:bg-blue-700 text-white rounded-full px-6" 
-            onClick={() => navigate("/login")}
-          >
-            Log in
-          </Button>
+          {!isLoggedIn ? (
+            <div className="hidden md:flex items-center gap-2">
+              <Button variant="ghost" onClick={() => navigate("/login")}>Log In</Button>
+              <Button onClick={() => navigate("/login")}>Sign Up</Button>
+            </div>
+          ) : (
+            <div className="hidden md:flex items-center gap-3 cursor-pointer" onClick={() => navigate("/dashboard")}>
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm uppercase">
+                {user?.username ? user.username.substring(0, 2) : "U"}
+              </div>
+              <span className="text-sm font-semibold text-gray-700">{user?.username || "User"}</span>
+            </div>
+          )}
           <button
             className="md:hidden p-2 text-gray-600 hover:bg-gray-50 rounded-md"
             onClick={() => setMenuOpen(o => !o)}
@@ -82,21 +96,19 @@ export default function Navbar() {
               {link.label}
             </NavLink>
           ))}
-          <div className="flex flex-col gap-2 mt-2">
-            <Button 
-              variant="ghost"
-              className="w-full font-semibold text-gray-900 hover:bg-gray-100"
-              onClick={() => { setMenuOpen(false); navigate("/signup"); }}
-            >
-              Sign up
-            </Button>
-            <Button 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full"
-              onClick={() => { setMenuOpen(false); navigate("/login"); }}
-            >
-              Log in
-            </Button>
-          </div>
+          {!isLoggedIn ? (
+            <div className="flex flex-col gap-2 mt-2 border-t border-gray-100 pt-4">
+              <Button variant="outline" className="w-full" onClick={() => { setMenuOpen(false); navigate("/login"); }}>Log In</Button>
+              <Button className="w-full" onClick={() => { setMenuOpen(false); navigate("/login"); }}>Sign Up</Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-3 mt-2 border-t border-gray-100 pt-4 px-2 cursor-pointer" onClick={() => { setMenuOpen(false); navigate("/dashboard"); }}>
+              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-base uppercase">
+                {user?.username ? user.username.substring(0, 2) : "U"}
+              </div>
+              <span className="text-base font-semibold text-gray-700">{user?.username || "User"}</span>
+            </div>
+          )}
         </div>
       )}
     </header>

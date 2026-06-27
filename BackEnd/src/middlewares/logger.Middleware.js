@@ -31,14 +31,12 @@ const log = pino(
   transport,
 );
 
-export const logger = 
-  pinoHttp({
-    logger: log,
-    customSuccessMessage: (req, res, responseTime) => {
-      return `${req.method} ${req.url} completed with status ${res.statusCode} in ${responseTime}ms`;
-    },
-    customErrorMessage: (req, res, err) => {
-      return `${req.method} ${req.url} failed with status ${res.statusCode} - ${err.message}`;
-    },
-  });
-
+export const logger = pinoHttp({
+  logger: log,
+  customSuccessMessage: (req, res, responseTime) => {
+    return `${req.method} ${req.url} completed with status ${res.statusCode} in ${responseTime}ms`;
+  },
+  customErrorMessage: (req, res, err) => {
+    return `${req.method} ${req.url} failed with status ${res.statusCode} - ${err.message}`;
+  },
+});
