@@ -1,7 +1,5 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
+// Hoop v2 — Prisma Schema
+// Spec Reference: HOOP_REDESIGN_SPEC.md v2.0
 
 generator client {
   provider = "prisma-client-js"
@@ -11,6 +9,63 @@ datasource db {
   provider = "postgresql"
 }
 
+// ─────────────────────────────────────────────
+// ENUMS
+// ─────────────────────────────────────────────
+
+enum BookingStatus {
+  pending   // Organizer submitted — waiting for venue confirmation
+  approved  // Venue owner confirmed the booking
+  rejected  // Venue owner denied the booking
+  cancelled // Organizer withdrew the request
+}
+
+enum AttendeeStatus {
+  pending
+  accepted
+  declined
+  maybe
+}
+
+enum TaskStatus {
+  pending
+  in_progress
+  done
+}
+
+/// Whether this is a small (house-party scale, pin on map) or big
+/// (venue-backed, conference scale) event. Locked after creation.
+enum EventSize {
+  small // House party, dinner, study group — user pins location on map
+  big   // Wedding, gala, conference — user selects from venue listings
+}
+
+/// Lifecycle of a user's venue listing application reviewed by an admin.
+enum ApplicationStatus {
+  pending  // Submitted, waiting for admin review
+  approved // Admin approved — venue auto-created
+  rejected // Admin rejected — reason provided
+}
+
+/// All categories of in-app / email notifications the system emits.
+enum NotificationType {
+  event_created       // "You've been invited to [Event Name]!"
+  event_updated       // "Details for [Event Name] have been updated"
+  event_cancelled     // "[Event Name] has been cancelled"
+  event_reminder      // "Reminder: [Event Name] is in X days!"
+  venue_app_submitted // "Your venue application has been submitted"
+  venue_app_approved  // "Your venue '[Name]' has been approved!"
+  venue_app_rejected  // "Your venue application was not approved"
+  booking_request     // "New booking request for your venue '[Name]'"
+  booking_approved    // "Your venue booking has been confirmed!"
+  booking_rejected    // "Your venue booking was declined"
+  rsvp_update         // "X new RSVPs for your event"
+}
+
+// ─────────────────────────────────────────────
+// MODELS
+// ─────────────────────────────────────────────
+
 model User {
   userId       Int      @id @default(autoincrement())
   username     String   @db.VarChar(100)
@@ -18,12 +73,16 @@ model User {
   passwordHash String   @db.VarChar(255)
   createdAt    DateTime @default(now())
 
+  // Relations
   userRoles       UserRole[]
   organizedEvents Event[]        @relation("EventOrganizer")
   eventMembers    EventMember[]
-  tasks           Task[]
   notifications   Notification[]
   venues          Venue[]
+
+  // Venue application relations (as applicant and as admin reviewer)
+  venueApplications         VenueApplication[] @relation("VenueApplicant")
+  reviewedVenueApplications VenueApplication[] @relation("VenueReviewer")
 
   @@map("users")
 }
@@ -59,48 +118,72 @@ model EventType {
 }
 
 model Event {
-  eventId      Int      @id @default(autoincrement())
+  eventId      Int       @id @default(autoincrement())
   userId       Int
-  eventTitle   String   @db.VarChar(200)
+  eventTitle   String    @db.VarChar(200)
   eventTypeId  Int
-  eventDate    DateTime @db.Date
-  eventTime    DateTime @db.Time
-  eventEndTime DateTime @db.Time
-  budget       Decimal  @db.Decimal(10, 2)
-  createdAt    DateTime @default(now())
+  eventDate    DateTime  @db.Date
+  eventTime    DateTime  @db.Time
+  eventEndTime DateTime  @db.Time
+  budget       Decimal?  @db.Decimal(10, 2)
+  createdAt    DateTime  @default(now())
 
-  organizer User      @relation("EventOrganizer", fields: [userId], references: [userId])
-  eventType EventType @relation(fields: [eventTypeId], references: [eventTypeId])
+  // v2 additions ────────────────────────────────────────────────────────────
+  /// Locked after creation. small = pin on map; big = venue from listings.
+  eventSize       EventSize
+  description     String?   @db.Text
+
+  // Small-event location (null for big events)
+  locationLat     Decimal?  @db.Decimal(10, 7)
+  locationLng     Decimal?  @db.Decimal(10, 7)
+  locationAddress String?   @db.VarChar(500) // Reverse-geocoded human-readable address
+  locationLabel   String?   @db.VarChar(200) // User's custom label e.g. "My apartment"
+
+  // Optional metadata
+  expectedGuests Int?
+  dressCode      String?   @db.VarChar(50)  // Casual / Semi-formal / Formal / Themed
+  specialNotes   String?   @db.Text
+
+  // Reminder tracking — null means reminder hasn't been sent yet
+  reminderSentAt DateTime?
+  // ─────────────────────────────────────────────────────────────────────────
+
+  // Relations
+  organizer     User          @relation("EventOrganizer", fields: [userId], references: [userId])
+  eventType     EventType     @relation(fields: [eventTypeId], references: [eventTypeId])
 
   venueBookings VenueBooking[]
   attendees     Attendee[]
   eventMembers  EventMember[]
-  tasks         Task[]
-  activities    Activity[]
+  checklists    Checklist[]
+  agenda        Agenda[]
   expenses      Expense[]
+  notifications Notification[]
 
   @@map("events")
 }
 
 model Venue {
-  venueId      Int    @id @default(autoincrement())
-  name         String @db.VarChar(150)
-  location     String @db.VarChar(255)
+  venueId      Int     @id @default(autoincrement())
+  name         String  @db.VarChar(150)
+  location     String  @db.VarChar(255)
   capacity     Int
-  contactEmail String @db.VarChar(150)
-  ownerId      Int? // Optional: links to a User if venue owner has an account
-  owner        User?  @relation(fields: [ownerId], references: [userId])
+  contactEmail String  @db.VarChar(150)
+  ownerId      Int?    // Links to a User if venue owner has a platform account
 
+  // v2 additions ────────────────────────────────────────────────────────────
+  /// Admin can deactivate without deleting (soft-delete pattern).
+  isActive    Boolean  @default(true)
+  description String?  @db.Text
+  imageUrls   String[] @default([]) // Array of image URLs (Postgres native array)
+  priceRange  String?  @db.VarChar(50)  // "$" | "$$" | "$$$"
+  amenities   String[] @default([])     // e.g. ["WiFi", "Parking", "Sound System"]
+  // ─────────────────────────────────────────────────────────────────────────
+
+  owner           User?          @relation(fields: [ownerId], references: [userId])
   bookingRequests VenueBooking[]
 
   @@map("venues")
-}
-
-enum BookingStatus {
-  pending // Organizer submitted — waiting for venue confirmation
-  approved // Venue owner confirmed the booking
-  rejected // Venue owner denied the booking
-  cancelled // Organizer withdrew the request
 }
 
 model VenueBooking {
@@ -109,7 +192,7 @@ model VenueBooking {
   eventId     Int           @unique // One active venue booking per event
   status      BookingStatus @default(pending)
   requestedAt DateTime      @default(now())
-  respondedAt DateTime? // Timestamp when venue owner acted
+  respondedAt DateTime?     // Timestamp when venue owner acted
   notes       String?       @db.Text // Venue owner's reply or reason for rejection
 
   venue Venue @relation(fields: [venueId], references: [venueId])
@@ -118,11 +201,27 @@ model VenueBooking {
   @@map("venue_bookings")
 }
 
-enum AttendeeStatus {
-  pending
-  accepted
-  declined
-  maybe
+/// Venue listing application submitted by a user and reviewed by an admin.
+/// On approval, a Venue record is auto-created and the applicant gains the
+/// venue_owner role.
+model VenueApplication {
+  applicationId   Int               @id @default(autoincrement())
+  userId          Int               // Applicant
+  venueName       String            @db.VarChar(150)
+  venueLocation   String            @db.VarChar(255)
+  venueCapacity   Int
+  contactEmail    String            @db.VarChar(150)
+  description     String?           @db.Text // Why the user wants to list this venue
+  status          ApplicationStatus @default(pending)
+  reviewedBy      Int?              // Admin who reviewed
+  submittedAt     DateTime          @default(now())
+  reviewedAt      DateTime?
+  rejectionReason String?           @db.Text // Required when rejecting
+
+  applicant User  @relation("VenueApplicant", fields: [userId], references: [userId])
+  reviewer  User? @relation("VenueReviewer", fields: [reviewedBy], references: [userId])
+
+  @@map("venue_applications")
 }
 
 model Attendee {
@@ -151,28 +250,19 @@ model EventMember {
   @@map("event_members")
 }
 
-enum TaskStatus {
-  pending
-  in_progress
-  done
-}
-
-model Task {
-  taskId      Int        @id @default(autoincrement())
+model Checklist {
+  checklistId Int     @id @default(autoincrement())
   eventId     Int
-  assignedTo  Int?
-  description String     @db.Text
-  status      TaskStatus @default(pending)
-  deadline    DateTime?
+  description String  @db.Text
+  isDone      Boolean @default(false)
 
-  event    Event @relation(fields: [eventId], references: [eventId])
-  assignee User? @relation(fields: [assignedTo], references: [userId])
+  event Event @relation(fields: [eventId], references: [eventId])
 
-  @@map("tasks")
+  @@map("checklist")
 }
 
-model Activity {
-  activityId  Int      @id @default(autoincrement())
+model Agenda {
+  agendaId    Int      @id @default(autoincrement())
   eventId     Int
   title       String   @db.VarChar(150)
   description String?  @db.Text
@@ -181,7 +271,7 @@ model Activity {
 
   event Event @relation(fields: [eventId], references: [eventId])
 
-  @@map("activities")
+  @@map("agenda")
 }
 
 model Expense {
@@ -197,14 +287,21 @@ model Expense {
   @@map("expenses")
 }
 
+/// Enhanced notification model — typed, optionally linked to an event,
+/// and carrying a structured JSON metadata payload for rich rendering.
 model Notification {
-  notificationId Int      @id @default(autoincrement())
+  notificationId Int              @id @default(autoincrement())
   userId         Int
-  message        String   @db.Text
-  isRead         Boolean  @default(false)
-  createdAt      DateTime @default(now())
+  eventId        Int?             // Optional link to a related event
+  type           NotificationType
+  title          String           @db.VarChar(200)
+  message        String           @db.Text
+  metadata       Json?            // Structured payload (map URL, agenda, venue details, etc.)
+  isRead         Boolean          @default(false)
+  createdAt      DateTime         @default(now())
 
-  user User @relation(fields: [userId], references: [userId])
+  user  User   @relation(fields: [userId], references: [userId])
+  event Event? @relation(fields: [eventId], references: [eventId])
 
   @@map("notifications")
 }

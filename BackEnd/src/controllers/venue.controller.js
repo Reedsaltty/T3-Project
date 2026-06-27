@@ -2,163 +2,166 @@ import prisma from "../config/prisma.config.js";
 import { handleServerError } from "../utils/error.utils.js";
 import { reqParamId } from "../utils/reqBody.utils.js";
 
-
-/**
- * Fetches all venues from the database.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+// GET all active venues (public listing)
 export const getVenue = async (req, res) => {
   try {
-    const venues = await prisma.venue.findMany();
-
-    if (!venues) {
-      res.status(204).json({ message: "No venues available right now" });
-      return;
-    }
-    res.status(201).json(venues);
-  } catch (err) {
-    handleServerError(res, err, "Error fetching evenues");
-  }
-};
-
-
-/**
- * Fetches a specific venue by its ID from request parameters.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
-export const getVenueById = async (req, res) => {
-  try {
     const venues = await prisma.venue.findMany({
-      where: {
-        venueId: parseInt(reqParamId(req)),
-      },
+      where: { isActive: true },
     });
-    if (!venues) {
-      res.status(204).json({ message: "No venues available right now" });
-      return;
-    }
-    res.status(201).json(venues);
+    // Bug fix: 200 for GET (not 201)
+    res.status(200).json(venues);
   } catch (err) {
     handleServerError(res, err, "Error fetching venues");
   }
 };
 
+// GET a specific venue by ID (full detail view)
+export const getVenueById = async (req, res) => {
+  try {
+    // Bug fix: use findUnique for single record lookup
+    const venue = await prisma.venue.findUnique({
+      where: { venueId: parseInt(reqParamId(req)) },
+    });
+    if (!venue) {
+      return res.status(404).json({ message: "Venue not found" });
+    }
+    // Bug fix: 200 for GET (not 201)
+    res.status(200).json(venue);
+  } catch (err) {
+    handleServerError(res, err, "Error fetching venue");
+  }
+};
 
-/**
- * Fetches the venue booking record associated with an event ID.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+// GET the booking record associated with a specific event
 export const getBookingVenue = async (req, res) => {
   try {
     const bookVenue = await prisma.venueBooking.findUnique({
-      where: {
-        eventId: parseInt(reqParamId(req)),
-      },
+      where: { eventId: parseInt(reqParamId(req)) },
+      include: { venue: true },
     });
-
     if (!bookVenue) {
-      res.status(204).json({ message: "No venues available" });
-      return;
+      return res.status(404).json({ message: "No venue booking found for this event" });
     }
-    res.status(201).json(bookVenue);
+    // Bug fix: 200 for GET (not 201)
+    res.status(200).json(bookVenue);
   } catch (err) {
-    handleServerError(res, err, "Error fetching evenues");
+    handleServerError(res, err, "Error fetching venue booking");
   }
 };
 
-
-/**
- * Fetches all venues owned by a specific owner ID.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
-export const getVenueForOwner = async (req, res) => {
+// GET all venues owned by the currently logged-in user
+export const getMyVenues = async (req, res) => {
   try {
-    const venue = await prisma.venue.findMany({
-      where: {
-        ownerId: parseInt(reqParamId(req)),
-      },
+    const venues = await prisma.venue.findMany({
+      where: { ownerId: req.user.userId },
     });
-    if (!venue) {
-      res.status(204).json({ message: "No venues available" });
-      return;
-    }
-    res.status(201).json(venue);
+    // Bug fix: 200 for GET (not 201)
+    res.status(200).json(venues);
   } catch (err) {
-    handleServerError(res, err, "Error fetching data");
+    handleServerError(res, err, "Error fetching your venues");
   }
 };
 
-
-/**
- * Creates a new venue in the database.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
-export const setUpVenue = async (req, res) => {
+// POST — Create a new booking request for a venue
+export const createBooking = async (req, res) => {
   try {
-    const { name, location, capacity, contactEmail } = req.body;
-    const newVenue = await prisma.venue.create({
+    const { venueId, eventId } = req.body;
+
+    // Verify the event belongs to the logged-in user
+    const event = await prisma.event.findFirst({
+      where: { eventId: parseInt(eventId), userId: req.user.userId },
+    });
+    if (!event) {
+      return res.status(404).json({ message: "Event not found" });
+    }
+
+    const booking = await prisma.venueBooking.create({
       data: {
-        name: name.toString(),
-        location: location.toString(),
-        capacity: parseInt(capacity),
-        contactEmail: contactEmail.toString(),
-        ownerId: parseInt(reqParamId(req)), // Fixed from res to req
+        venueId: parseInt(venueId),
+        eventId: parseInt(eventId),
+        status: "pending",
       },
     });
-    if (!newVenue) {
-      res.status(204).json({ message: "Error creating venue" });
-      return;
-    }
-    res.status(201).json(newVenue);
+    res.status(201).json(booking);
   } catch (err) {
-    handleServerError(res, err, "Internal server error ");
+    handleServerError(res, err, "Error creating venue booking");
   }
 };
 
+// PATCH — Venue owner responds to a booking request (approve/reject)
+export const respondToBooking = async (req, res) => {
+  try {
+    const bookingId = parseInt(reqParamId(req));
+    const { status, notes } = req.body; // status: 'approved' | 'rejected'
 
-/**
- * Updates an existing venue by its ID.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+    // Verify the venue belongs to this owner
+    const booking = await prisma.venueBooking.findUnique({
+      where: { bookingId },
+      include: { venue: true },
+    });
+    if (!booking) {
+      return res.status(404).json({ message: "Booking not found" });
+    }
+    if (booking.venue.ownerId !== req.user.userId) {
+      return res.status(403).json({ message: "You do not own this venue" });
+    }
+
+    const updated = await prisma.venueBooking.update({
+      where: { bookingId },
+      data: { status, notes: notes ? String(notes) : null, respondedAt: new Date() },
+    });
+    res.status(200).json(updated);
+  } catch (err) {
+    handleServerError(res, err, "Error responding to booking");
+  }
+};
+
+// PUT — Update venue details (owner only)
 export const updateVenue = async (req, res) => {
   try {
-    const { name, location, capacity, contactEmail } = req.body;
+    const venueId = parseInt(reqParamId(req));
+    const { name, location, capacity, contactEmail, description, priceRange, amenities } = req.body;
+
+    // Ownership check
+    const venue = await prisma.venue.findUnique({ where: { venueId } });
+    if (!venue) return res.status(404).json({ message: "Venue not found" });
+    if (venue.ownerId !== req.user.userId) {
+      return res.status(403).json({ message: "You do not own this venue" });
+    }
+
     const updatedVenue = await prisma.venue.update({
-      where: { venueId: parseInt(reqParamId(req)) }, // Fixed from res to req
+      where: { venueId },
       data: {
-        name: name.toString(),
-        location: location.toString(),
-        capacity: parseInt(capacity),
-        contactEmail: contactEmail.toString(),
+        name: name ? String(name) : undefined,
+        location: location ? String(location) : undefined,
+        capacity: capacity ? parseInt(capacity) : undefined,
+        contactEmail: contactEmail ? String(contactEmail) : undefined,
+        description: description !== undefined ? String(description) : undefined,
+        priceRange: priceRange !== undefined ? String(priceRange) : undefined,
+        amenities: amenities !== undefined ? amenities : undefined,
       },
     });
-    res.status(201).json(updatedVenue);
+    res.status(200).json(updatedVenue);
   } catch (err) {
     handleServerError(res, err, "Internal server error");
   }
 };
 
-
-/**
- * Deletes a venue from the database by its ID.
- * @param {Object} req - Express request object
- * @param {Object} res - Express response object
- */
+// DELETE — Remove venue (owner only, no active bookings)
 export const deleteVenue = async (req, res) => {
   try {
-    await prisma.venue.delete({
-      where: {
-        venueId: parseInt(reqParamId(req)) // Fixed from res to req
-      }
-    })
+    const venueId = parseInt(reqParamId(req));
+
+    // Security fix: verify ownership before deleting
+    const venue = await prisma.venue.findUnique({ where: { venueId } });
+    if (!venue) return res.status(404).json({ message: "Venue not found" });
+    if (venue.ownerId !== req.user.userId) {
+      return res.status(403).json({ message: "You do not own this venue" });
+    }
+
+    await prisma.venue.delete({ where: { venueId } });
     res.status(204).send();
   } catch (err) {
-    handleServerError(res, err, "Error delete venue");
+    handleServerError(res, err, "Error deleting venue");
   }
 };

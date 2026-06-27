@@ -1,76 +1,45 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
-import { deleteVenue, getBookingVenue, getVenue, getVenueById, updateVenue, setUpVenue } from "../controllers/venue.controller.js";
+import { authorizeRoles } from "../middlewares/roleMiddleware.js";
 import { validate } from "../middlewares/validate.middleware.js";
 import { venueSchema } from "../validation/venue.validation.js";
-import { updateEvent } from "../controllers/event.controller.js";
+import {
+  getVenue,
+  getVenueById,
+  getBookingVenue,
+  getMyVenues,
+  createBooking,
+  respondToBooking,
+  updateVenue,
+  deleteVenue,
+} from "../controllers/venue.controller.js";
 
 const router = express.Router();
 
-// All venue routes are protected — user must be logged in
 router.use(authMiddleware);
 
-/**
- * @route   GET /api/venues
- * @desc    Get all available venues
- * @access  Private
- */
+// GET /api/venues  — All active venues (public listing)
 router.get("/", getVenue);
 
-/**
- * @route   GET /api/venues/booking/:eventId
- * @desc    Get venue booking information for a specific event
- * @access  Private
- */
+// GET /api/venues/mine  — All venues owned by the logged-in user
+router.get("/mine", authorizeRoles("venue_owner", "admin"), getMyVenues);
+
+// GET /api/venues/booking/:eventId  — Booking info for an event
 router.get("/booking/:eventId", getBookingVenue);
 
-/**
- * @route   GET /api/venues/mine
- * @desc    Get all venues owned by the current user
- * @access  Private (venue_owner)
- */
-router.get("/mine", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
-
-/**
- * @route   GET /api/venues/:venueId/details
- * @desc    Get full details for a specific venue
- * @access  Private
- */
-router.get("/:venueId/details", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
-
-/**
- * @route   GET /api/venues/:venueId
- * @desc    Get a specific venue by its ID (partial view)
- * @access  Private
- */
+// GET /api/venues/:venueId  — Full venue detail
 router.get("/:venueId", getVenueById);
 
-/**
- * @route   POST /api/venues
- * @desc    Create and set up a new venue
- * @access  Private
- */
-router.post("/", validate(venueSchema), setUpVenue);
+// POST /api/venues/:venueId/book  — Create a booking request
+router.post("/:venueId/book", createBooking);
 
-/**
- * @route   POST /api/venues/:venueId/book
- * @desc    Create a booking request for a venue
- * @access  Private
- */
-router.post("/:venueId/book", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
+// PATCH /api/venues/bookings/:bookingId/respond  — Venue owner responds to a booking
+router.patch("/bookings/:bookingId/respond", authorizeRoles("venue_owner", "admin"), respondToBooking);
 
-/**
- * @route   PUT /api/venues/:venueId
- * @desc    Update an existing venue's details
- * @access  Private
- */
-router.put("/:venueId", validate(venueSchema), updateVenue);
+// PUT /api/venues/:venueId  — Update venue details (owner only)
+router.put("/:venueId", authorizeRoles("venue_owner", "admin"), validate(venueSchema), updateVenue);
 
-/**
- * @route   DELETE /api/venues/:venueId
- * @desc    Delete a venue from the platform
- * @access  Private
- */
-router.delete("/:venueId", deleteVenue);
+// DELETE /api/venues/:venueId  — Delete a venue (owner only)
+router.delete("/:venueId", authorizeRoles("venue_owner", "admin"), deleteVenue);
 
 export default router;

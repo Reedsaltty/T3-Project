@@ -1,24 +1,31 @@
 import express from "express";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
+import {
+  getNotifications,
+  getUnreadCount,
+  markAsRead,
+  markAllAsRead,
+  deleteNotification,
+} from "../controllers/notification.controller.js";
 
 const router = express.Router();
 
-// All notification routes are protected
 router.use(authMiddleware);
 
-// GET /api/notifications
-router.get("/", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
+// GET    /api/notifications               — Get paginated notifications (?page=&limit=)
+router.get("/", getNotifications);
 
-// GET /api/notifications/unread-count
-router.get("/unread-count", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
+// GET    /api/notifications/unread-count  — Get count of unread notifications
+// NOTE: This must be registered BEFORE /:id to avoid Express matching "unread-count" as an :id param
+router.get("/unread-count", getUnreadCount);
 
-// PATCH /api/notifications/:id/read
-router.patch("/:id/read", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
+// PATCH  /api/notifications/read-all     — Mark all notifications as read
+router.patch("/read-all", markAllAsRead);
 
-// PATCH /api/notifications/read-all
-router.patch("/read-all", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
+// PATCH  /api/notifications/:id/read     — Mark a single notification as read
+router.patch("/:id/read", markAsRead);
 
-// DELETE /api/notifications/:id
-router.delete("/:id", (req, res) => { res.status(501).json({ message: "Not Implemented" }); });
+// DELETE /api/notifications/:id          — Delete a notification
+router.delete("/:id", deleteNotification);
 
 export default router;
