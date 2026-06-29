@@ -1,12 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
 import { useEventContext } from "./EventContext";
-import { ArrowLeft, ArrowRight, MapPin, Users, DollarSign, Star, Search, CheckCircle2, Filter } from "lucide-react";
+import { ArrowLeft, ArrowRight, MapPin, Users, DollarSign, Star, Search, CheckCircle2, Filter, PlusCircle, X, Loader2 } from "lucide-react";
 import { VENUES } from "./venuesData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { getVenues, submitVenueApplication } from "../../api/venue.api";
 
 
 
@@ -31,13 +32,73 @@ export default function VenueSelectionNew() {
   const [search, setSearch] = useState("");
   const [showFilters, setShowFilters] = useState(false);
   
+  // Real venues & Application state
+  const [venuesList, setVenuesList] = useState(VENUES);
+  const [showAppModal, setShowAppModal] = useState(false);
+  const [appForm, setAppForm] = useState({
+    venueName: "",
+    venueLocation: "",
+    venueCapacity: "",
+    contactEmail: "",
+    description: ""
+  });
+  const [appStatus, setAppStatus] = useState({ loading: false, error: null, success: null });
+
+  useEffect(() => {
+    const fetchBackendVenues = async () => {
+      setLoadingVenues(true);
+      try {
+        const data = await getVenues();
+        if (data && Array.isArray(data) && data.length > 0) {
+          const mapped = data.map(v => ({
+            id: v.venueId || v.id,
+            name: v.name,
+            address: v.location || v.address || "No address provided",
+            capacity: v.capacity || 100,
+            price: v.priceRange || "$$",
+            rating: 4.8,
+            tags: v.amenities || []
+          }));
+          const existingIds = new Set(VENUES.map(mv => mv.id));
+          const uniqueBackend = mapped.filter(b => !existingIds.has(b.id));
+          setVenuesList([...uniqueBackend, ...VENUES]);
+        }
+      } catch (err) {
+        console.warn("Could not fetch backend venues, falling back to mock data:", err);
+      } finally {
+        setLoadingVenues(false);
+      }
+    };
+    fetchBackendVenues();
+  }, []);
+
+  const handleAppSubmit = async (e) => {
+    e.preventDefault();
+    setAppStatus({ loading: true, error: null, success: null });
+    try {
+      await submitVenueApplication(appForm);
+      setAppStatus({ loading: false, error: null, success: "Application submitted successfully! An admin will review it soon." });
+      setAppForm({ venueName: "", venueLocation: "", venueCapacity: "", contactEmail: "", description: "" });
+      setTimeout(() => {
+        setShowAppModal(false);
+        setAppStatus({ loading: false, error: null, success: null });
+      }, 2000);
+    } catch (err) {
+      setAppStatus({
+        loading: false,
+        error: err.response?.data?.message || err.message || "Failed to submit application",
+        success: null
+      });
+    }
+  };
+
   // Filters
   const [priceFilter, setPriceFilter] = useState("All");
   const [capFilter, setCapFilter] = useState("All");
 
-  const filtered = VENUES.filter(v => {
+  const filtered = venuesList.filter(v => {
     // Search
-    const matchSearch = v.name.toLowerCase().includes(search.toLowerCase()) || v.address.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = (v.name || "").toLowerCase().includes(search.toLowerCase()) || (v.address || "").toLowerCase().includes(search.toLowerCase());
     
     // Price
     let matchPrice = true;
@@ -116,6 +177,12 @@ export default function VenueSelectionNew() {
                   className={`h-12 px-6 gap-2 rounded-xl transition-colors ${showFilters ? "bg-blue-600 hover:bg-blue-700" : "bg-white"}`}
                 >
                   <Filter size={16} /> Filters
+                </Button>
+                <Button
+                  onClick={() => setShowAppModal(true)}
+                  className="h-12 px-6 gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm transition-all whitespace-nowrap"
+                >
+                  <PlusCircle size={16} /> List Your Venue
                 </Button>
               </div>
 
@@ -234,6 +301,110 @@ export default function VenueSelectionNew() {
 
         </div>
       </main>
+
+      {/* Venue Application Modal */}
+      <AnimatePresence>
+        {showAppModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl p-6 max-w-md w-full shadow-xl border border-gray-100 relative max-h-[90vh] overflow-y-auto text-left"
+            >
+              <button
+                onClick={() => setShowAppModal(false)}
+                className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+              >
+                <X size={20} />
+              </button>
+              <h3 className="text-xl font-bold text-gray-900 mb-1">Submit Venue Application</h3>
+              <p className="text-sm text-gray-500 mb-4">List your venue on Hoop. An admin will review and approve your submission.</p>
+
+              {appStatus.error && (
+                <div className="mb-4 p-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100">
+                  {appStatus.error}
+                </div>
+              )}
+              {appStatus.success && (
+                <div className="mb-4 p-3 bg-emerald-50 text-emerald-700 text-sm rounded-xl border border-emerald-100 font-medium">
+                  {appStatus.success}
+                </div>
+              )}
+
+              <form onSubmit={handleAppSubmit} className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Venue Name *</label>
+                  <Input
+                    required
+                    placeholder="e.g. Grand Sunset Lounge"
+                    value={appForm.venueName}
+                    onChange={e => setAppForm({ ...appForm, venueName: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Location / Address *</label>
+                  <Input
+                    required
+                    placeholder="e.g. 123 Sukhumvit Rd, Bangkok"
+                    value={appForm.venueLocation}
+                    onChange={e => setAppForm({ ...appForm, venueLocation: e.target.value })}
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Capacity *</label>
+                    <Input
+                      required
+                      type="number"
+                      min="1"
+                      placeholder="e.g. 150"
+                      value={appForm.venueCapacity}
+                      onChange={e => setAppForm({ ...appForm, venueCapacity: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Contact Email *</label>
+                    <Input
+                      required
+                      type="email"
+                      placeholder="e.g. contact@venue.com"
+                      value={appForm.contactEmail}
+                      onChange={e => setAppForm({ ...appForm, contactEmail: e.target.value })}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 uppercase mb-1">Description</label>
+                  <textarea
+                    rows="3"
+                    placeholder="Describe the venue features, vibe, and why it's great for events..."
+                    className="w-full p-3 text-sm border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600/20 focus:border-blue-600"
+                    value={appForm.description}
+                    onChange={e => setAppForm({ ...appForm, description: e.target.value })}
+                  />
+                </div>
+                <div className="flex justify-end gap-3 pt-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setShowAppModal(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    disabled={appStatus.loading}
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                  >
+                    {appStatus.loading ? <><Loader2 size={16} className="animate-spin mr-2 inline" /> Submitting...</> : "Submit Application"}
+                  </Button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
