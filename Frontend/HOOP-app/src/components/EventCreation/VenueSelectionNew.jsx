@@ -34,6 +34,7 @@ export default function VenueSelectionNew() {
   
   // Real venues & Application state
   const [venuesList, setVenuesList] = useState(VENUES);
+  const [loadingVenues, setLoadingVenues] = useState(false);
   const [showAppModal, setShowAppModal] = useState(false);
   const [appForm, setAppForm] = useState({
     venueName: "",
@@ -244,7 +245,12 @@ export default function VenueSelectionNew() {
             </div>
 
             {/* Venue Grid */}
-            {filtered.length === 0 ? (
+            {loadingVenues ? (
+              <div className="py-20 text-center text-gray-500 bg-white border border-gray-100 rounded-2xl flex flex-col items-center justify-center gap-3 shadow-sm">
+                <Loader2 size={36} className="animate-spin text-blue-600" />
+                <p className="text-base font-medium text-gray-600">Fetching curated venues...</p>
+              </div>
+            ) : filtered.length === 0 ? (
               <div className="py-20 text-center text-gray-500 bg-white border border-dashed border-gray-200 rounded-2xl">
                 <MapPin size={40} className="mx-auto mb-4 text-gray-300" />
                 <p className="text-lg">No venues match your current filters.</p>
