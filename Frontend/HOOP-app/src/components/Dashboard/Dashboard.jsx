@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { mockEventsData as initialEvents } from "../../data/mockEvents";
+import { getEvents } from "../../api/event.api";
 import { useEventContext } from "../EventCreation/EventContext";
 
 const statusConfig = {
@@ -34,7 +34,32 @@ const itemVariants = {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { resetEventData } = useEventContext();
-  const [events] = useState(initialEvents);
+  const [events, setEvents] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchEvents = async () => {
+      try {
+        const data = await getEvents();
+        const mappedEvents = data.map(e => ({
+          id: e.eventId,
+          name: e.eventTitle,
+          date: new Date(e.eventDate).toLocaleDateString(),
+          budget: 50, // mock budget percentage for UI
+          guests: e.expectedGuests || e.attendees?.length || 0,
+          venue: e.locationLabel || "TBD",
+          type: e.eventType?.typeName || "Event",
+          status: "upcoming" // mocked for now until backend provides status
+        }));
+        setEvents(mappedEvents);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchEvents();
+  }, []);
 
   const handleCreateEvent = () => {
     resetEventData();
@@ -43,6 +68,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");
   const [sortBy, setSortBy] = useState("date-asc");
+
 
   const filteredAndSorted = events
     .filter(e => {

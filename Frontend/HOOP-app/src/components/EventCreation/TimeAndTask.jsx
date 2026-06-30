@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
 import { useEventContext } from "./EventContext";
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Clock, Users, MapPin, Calendar, ListTodo, Zap } from "lucide-react";
+import { ArrowLeft, Plus, Trash2, CheckCircle2, Clock, Users, MapPin, Calendar, ListTodo, Zap, Loader2 } from "lucide-react";
 import { VENUES } from "./venuesData";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
-const CATEGORIES = ["Ceremony", "Reception", "Entertainment", "Catering", "Logistics", "Other"];
+// API imports
+import { createEvent } from "../../api/event.api";
+import { bookVenue } from "../../api/venue.api";
+import { createActivity } from "../../api/activity.api";
+import { addGuest } from "../../api/guest.api";
 
+const CATEGORIES = ["Ceremony", "Reception", "Entertainment", "Catering", "Logistics", "Other"];
 
 let nextId = 5;
 
@@ -26,11 +31,12 @@ export default function TimeAndTask() {
   const { 
     activities, setActivities, 
     eventDate, setEventDate,
-    form, guests, selectedVenue, resetEventData 
+    form, guests, location, selectedVenueId, resetEventData 
   } = useEventContext();
   const [adding, setAdding] = useState(false);
   const [showReview, setShowReview] = useState(false);
   const [newAct, setNewAct] = useState({ name: "", time: "", duration: 30, category: "Other", desc: "" });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   function addActivity() {
     if (!newAct.name || !newAct.time) return;
@@ -42,6 +48,70 @@ export default function TimeAndTask() {
   function removeActivity(id) {
     setActivities(a => a.filter(x => x.id !== id));
   }
+
+  const handleCreateEvent = async () => {
+    setIsSubmitting(true);
+    try {
+      // 1. Create Event
+      const eventPayload = {
+        eventTitle: form.title,
+        eventTypeId: Number(form.eventTypeId),
+        eventDate: eventDate,
+        eventTime: form.startTime,
+        eventEndTime: form.endTime,
+        eventSize: form.eventSize,
+        description: form.description,
+        budget: form.budget ? Number(form.budget) : undefined,
+        expectedGuests: form.attendance ? Number(form.attendance) : undefined,
+        dressCode: form.dressCode,
+        specialNotes: form.specialNotes,
+      };
+
+      if (form.eventSize === "small") {
+        eventPayload.locationLat = location.lat;
+        eventPayload.locationLng = location.lng;
+        eventPayload.locationAddress = location.address;
+        eventPayload.locationLabel = location.label;
+      }
+
+      const { event } = await createEvent(eventPayload);
+      const eventId = event.eventId;
+
+      // 2. Book Venue (if big and selected)
+      if (form.eventSize === "big" && selectedVenueId) {
+        await bookVenue(selectedVenueId, eventId);
+      }
+
+      // 3. Create Activities
+      for (const act of activities) {
+        const [hours, minutes] = act.time.split(':');
+        const start = new Date(eventDate);
+        start.setHours(Number(hours), Number(minutes), 0, 0);
+        const end = new Date(start.getTime() + act.duration * 60000);
+        
+        await createActivity(eventId, {
+          title: act.name,
+          description: act.desc,
+          startTime: start.toISOString(),
+          endTime: end.toISOString()
+        });
+      }
+
+      // 4. Add Guests
+      for (const g of guests) {
+        await addGuest(eventId, { name: g.name, email: g.email });
+      }
+
+      setShowReview(false);
+      resetEventData();
+      navigate("/dashboard");
+    } catch (err) {
+      console.error(err);
+      alert(err.response?.data?.message || "Failed to create event. See console for details.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const CATEGORY_COLORS = {
     Ceremony: "bg-blue-600 border-blue-600", 
@@ -62,7 +132,7 @@ export default function TimeAndTask() {
           <div className="flex items-center bg-white border border-gray-100 rounded-2xl p-5 px-8 shadow-sm mb-10">
             {[
               { n: 1, label: "Set Up Event",    done: true,  active: false },
-              { n: 2, label: "Venue Selection", done: true,  active: false },
+              { n: 2, label: form.eventSize === "small" ? "Location" : "Venue Selection", done: true,  active: false },
               { n: 3, label: "Time & Task",     done: false, active: true  },
             ].map((s, i, arr) => (
               <div key={s.n} className="flex items-center flex-1">
@@ -236,8 +306,8 @@ export default function TimeAndTask() {
             <Button variant="outline" onClick={() => navigate("/event-creation/venue")} className="gap-2">
               <ArrowLeft size={16} /> Back
             </Button>
-            <Button onClick={() => navigate("/")} className="gap-2 px-6">
-              <CheckCircle2 size={16} /> Create Event
+            <Button onClick={() => setShowReview(true)} className="gap-2 px-6">
+              Review Details <ArrowRight size={16} />
             </Button>
           </div>
 
@@ -264,7 +334,7 @@ export default function TimeAndTask() {
                   <div className="pt-0.5 flex flex-col justify-center h-14">
                     <h3 className="text-xl font-bold text-gray-900 leading-tight mb-1">{form?.title || "Untitled Event"}</h3>
                     <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-600/10 text-blue-700 uppercase tracking-widest w-fit">
-                      {form?.type || "Unspecified"}
+                      {form?.eventSize === "small" ? "Small Event" : "Big Event"}
                     </div>
                   </div>
                 </div>
@@ -281,14 +351,14 @@ export default function TimeAndTask() {
 
                   <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-1 hover:border-blue-200 transition-colors group">
                     <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">
-                      <MapPin size={16} className="text-emerald-500 group-hover:scale-110 transition-transform" /> Venue
+                      <MapPin size={16} className="text-emerald-500 group-hover:scale-110 transition-transform" /> Location
                     </div>
                     <span className="text-xl font-bold text-gray-900 leading-tight truncate">
-                      {selectedVenue 
-                        ? VENUES.find(v => v.id === selectedVenue)?.name || `Venue #${selectedVenue}`
-                        : "None"}
+                      {form.eventSize === "small" 
+                        ? (location.label || "Map Pin Location")
+                        : (selectedVenueId ? VENUES.find(v => v.id === selectedVenueId)?.name || `Venue Selected` : "TBD")}
                     </span>
-                    <span className="text-xs font-medium text-gray-400 mt-1">selected location</span>
+                    <span className="text-xs font-medium text-gray-400 mt-1">{form.eventSize === "small" ? "address" : "selected venue"}</span>
                   </div>
 
                   <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-1 hover:border-blue-200 transition-colors group">
@@ -309,13 +379,13 @@ export default function TimeAndTask() {
                 </div>
 
                 <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100 mt-2">
-                  <Button variant="outline" className="h-12 px-6 rounded-xl font-semibold" onClick={() => setShowReview(false)}>Cancel</Button>
-                  <Button className="h-12 px-8 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all hover:shadow-[0_0_25px_rgba(37,99,235,0.5)]" onClick={() => {
-                    setShowReview(false);
-                    resetEventData();
-                    navigate("/dashboard");
-                  }}>
-                    <CheckCircle2 size={18} className="mr-2" /> Confirm & Create
+                  <Button variant="outline" className="h-12 px-6 rounded-xl font-semibold" onClick={() => setShowReview(false)} disabled={isSubmitting}>Cancel</Button>
+                  <Button 
+                    disabled={isSubmitting}
+                    className="h-12 px-8 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_20px_rgba(37,99,235,0.3)] transition-all hover:shadow-[0_0_25px_rgba(37,99,235,0.5)]" 
+                    onClick={handleCreateEvent}
+                  >
+                    {isSubmitting ? <><Loader2 size={18} className="animate-spin mr-2" /> Creating...</> : <><CheckCircle2 size={18} className="mr-2" /> Confirm & Create</>}
                   </Button>
                 </div>
               </div>

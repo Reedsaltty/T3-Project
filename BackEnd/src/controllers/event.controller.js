@@ -2,6 +2,16 @@ import prisma from "../config/prisma.config.js";
 import { handleServerError } from "../utils/error.utils.js";
 import { reqParamId } from "../utils/reqBody.utils.js";
 
+// GET all event types (for the frontend dropdown)
+export const getEventTypes = async (req, res) => {
+  try {
+    const types = await prisma.eventType.findMany({ orderBy: { eventTypeId: "asc" } });
+    res.status(200).json(types);
+  } catch (err) {
+    handleServerError(res, err, "Error fetching event types");
+  }
+};
+
 // CREATE an event — handles small (map pin) and big (venue) event types
 export const createEvent = async (req, res) => {
   try {
@@ -90,7 +100,6 @@ export const getEventById = async (req, res) => {
       include: {
         eventType: true,
         attendees: true,
-        activities: { orderBy: { startTime: "asc" } },
         expenses: true,
         venueBookings: { include: { venue: true } },
       },
@@ -104,6 +113,7 @@ export const getEventById = async (req, res) => {
     handleServerError(res, err, "Error fetching event");
   }
 };
+
 
 // UPDATE an event (ownership-checked, eventSize locked)
 export const updateEvent = async (req, res) => {

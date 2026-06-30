@@ -1,6 +1,5 @@
 
-
-export function handleServerError (res,err , message){
-        res.log.err(err)
-        res.status(500).json({ message : message })
+export function handleServerError(res, err, message) {
+    console.error(message, err);
+    res.status(500).json({ message });
 }

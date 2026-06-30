@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { loginUser } from "@/api/auth.api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Login({ onSwitchView }) {
+  const { loginContext } = useAuth();
   const [view, setView] = useState("login"); // "login" or "reset_password"
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -27,6 +29,7 @@ export default function Login({ onSwitchView }) {
       console.log('Login sucess', data)
       if (data.user) {
         localStorage.setItem("user", JSON.stringify(data.user));
+        loginContext(data.user);
       }
       setLoading(false)
       navigate("/")

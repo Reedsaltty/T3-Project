@@ -2,17 +2,9 @@ import React, { createContext, useContext, useState } from 'react';
 
 const EventContext = createContext();
 
-const defaultActivities = [
-  { id: 1, name: "Guest Arrival",  time: "18:00", duration: 30, category: "Logistics",      desc: "Welcome guests at the entrance." },
-  { id: 2, name: "Dinner Service", time: "18:30", duration: 90, category: "Catering",       desc: "Catered 3-course meal." },
-  { id: 3, name: "Cake Cutting",   time: "20:00", duration: 30, category: "Ceremony",       desc: "Birthday cake and desserts." },
-  { id: 4, name: "DJ & Dancing",   time: "20:30", duration: 150,category: "Entertainment", desc: "Live DJ set to close the night." },
-];
-
 const LOCAL_STORAGE_KEY = "hoop_event_data";
 
 export function EventProvider({ children }) {
-  // Try to load from localStorage first
   const loadState = () => {
     try {
       const saved = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -25,42 +17,66 @@ export function EventProvider({ children }) {
 
   const savedState = loadState();
 
+  // Core event fields — maps 1:1 to the createEvent API payload
   const [form, setForm] = useState(savedState?.form || {
-    title: "", 
-    type: "", 
-    startTime: "", 
-    endTime: "", 
-    attendance: "", 
-    budget: ""
+    title: "",
+    eventTypeId: "",   // int — maps to event_types table
+    startTime: "",
+    endTime: "",
+    attendance: "",
+    budget: "",
+    description: "",
+    dressCode: "",
+    specialNotes: "",
+    eventSize: "small", // "small" | "big"
   });
-  
-  const [guests, setGuests] = useState(savedState?.guests || []);
-  const [selectedVenue, setSelectedVenue] = useState(savedState?.selectedVenue || null);
-  const [eventDate, setEventDate] = useState(savedState?.eventDate || "");
-  const [activities, setActivities] = useState(savedState?.activities || defaultActivities);
 
-  // Save to localStorage whenever state changes
+  const [eventDate, setEventDate] = useState(savedState?.eventDate || "");
+
+  // Location — only used for small events (map pin)
+  const [location, setLocation] = useState(savedState?.location || {
+    lat: null,
+    lng: null,
+    address: "",
+    label: "",
+  });
+
+  // Venue — only for big events (venue booking, set in VenueSelection step)
+  const [selectedVenueId, setSelectedVenueId] = useState(savedState?.selectedVenueId || null);
+
+  // Guest list collected in SetUpEvent (submitted after event is created)
+  const [guests, setGuests] = useState(savedState?.guests || []);
+
+  // Agenda items (renamed from activities to match DB schema)
+  const [agenda, setAgenda] = useState(savedState?.agenda || []);
+
   React.useEffect(() => {
-    const stateToSave = { form, guests, selectedVenue, eventDate, activities };
+    const stateToSave = { form, guests, eventDate, location, selectedVenueId, agenda };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
-  }, [form, guests, selectedVenue, eventDate, activities]);
+  }, [form, guests, eventDate, location, selectedVenueId, agenda]);
 
   const resetEventData = () => {
-    setForm({ title: "", type: "", startTime: "", endTime: "", attendance: "", budget: "" });
+    setForm({
+      title: "", eventTypeId: "", startTime: "", endTime: "",
+      attendance: "", budget: "", description: "", dressCode: "",
+      specialNotes: "", eventSize: "small",
+    });
     setGuests([]);
-    setSelectedVenue(null);
+    setSelectedVenueId(null);
     setEventDate("");
-    setActivities(defaultActivities);
+    setLocation({ lat: null, lng: null, address: "", label: "" });
+    setAgenda([]);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
   const value = {
     form, setForm,
     guests, setGuests,
-    selectedVenue, setSelectedVenue,
     eventDate, setEventDate,
-    activities, setActivities,
-    resetEventData
+    location, setLocation,
+    selectedVenueId, setSelectedVenueId,
+    agenda, setAgenda,
+    resetEventData,
   };
 
   return (

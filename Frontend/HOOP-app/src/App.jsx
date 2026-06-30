@@ -13,41 +13,57 @@ import About          from './components/Homepage/About';
 import Contact        from './components/Homepage/Contact';
 import GlobalLoader   from './components/ui/GlobalLoader';
 import { LoaderProvider } from './context/LoaderContext';
+import { AuthProvider } from './context/AuthContext';
+import { EventProvider } from './components/EventCreation/EventContext';
+import ProtectedRoute from './components/ProtectedRoute';
+
+// Role Panels
+import AdminPanel from './components/Admin/AdminPanel';
+import VenueOwnerPanel from './components/VenueOwner/VenueOwnerPanel';
+
 import './App.css';
 
 function App() {
   const location = useLocation();
 
   return (
-    <LoaderProvider>
-      <GlobalLoader />
-      <AnimatePresence mode="wait">
-        <Routes location={location} key={location.pathname}>
-          {/* Landing / Marketing Home */}
-          <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
+    <AuthProvider>
+      <LoaderProvider>
+        <EventProvider>
+          <GlobalLoader />
+          <AnimatePresence mode="wait">
+            <Routes location={location} key={location.pathname}>
+              {/* Landing / Marketing Home */}
+              <Route path="/" element={<PageTransition><HomePage /></PageTransition>} />
 
-          {/* Auth */}
-          <Route path="/login" element={<PageTransition><Verify /></PageTransition>} />
-          <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-          <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
+              {/* Auth */}
+              <Route path="/login" element={<PageTransition><Verify /></PageTransition>} />
+              <Route path="/about" element={<PageTransition><About /></PageTransition>} />
+              <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
 
-          {/* Dashboard / Event Inventory */}
-          <Route path="/dashboard" element={<PageTransition><Dashboard /></PageTransition>} />
-          <Route path="/inventory" element={<PageTransition><Dashboard /></PageTransition>} />
+              {/* Dashboard / Event Inventory (Organizer) */}
+              <Route path="/dashboard" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
+              <Route path="/inventory" element={<ProtectedRoute><PageTransition><Dashboard /></PageTransition></ProtectedRoute>} />
 
-          {/* Event Creation Flow */}
-          <Route path="/event-creation/setup"     element={<PageTransition><SetUpEvent /></PageTransition>} />
-          <Route path="/event-creation/venue"     element={<PageTransition><VenueSelection /></PageTransition>} />
-          <Route path="/event-creation/time-task" element={<PageTransition><TimeAndTask /></PageTransition>} />
+              {/* Event Creation Flow */}
+              <Route path="/event-creation/setup"     element={<ProtectedRoute><PageTransition><SetUpEvent /></PageTransition></ProtectedRoute>} />
+              <Route path="/event-creation/venue"     element={<ProtectedRoute><PageTransition><VenueSelection /></PageTransition></ProtectedRoute>} />
+              <Route path="/event-creation/time-task" element={<ProtectedRoute><PageTransition><TimeAndTask /></PageTransition></ProtectedRoute>} />
 
-          {/* Event Overview */}
-          <Route path="/event/:id" element={<PageTransition><EventOverview /></PageTransition>} />
+              {/* Event Overview */}
+              <Route path="/event/:id" element={<ProtectedRoute><PageTransition><EventOverview /></PageTransition></ProtectedRoute>} />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </AnimatePresence>
-    </LoaderProvider>
+              {/* Role Panels */}
+              <Route path="/admin" element={<ProtectedRoute allowedRoles={["admin"]}><PageTransition><AdminPanel /></PageTransition></ProtectedRoute>} />
+              <Route path="/venue-owner" element={<ProtectedRoute allowedRoles={["venue_owner", "admin"]}><PageTransition><VenueOwnerPanel /></PageTransition></ProtectedRoute>} />
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </AnimatePresence>
+        </EventProvider>
+      </LoaderProvider>
+    </AuthProvider>
   );
 }
 
