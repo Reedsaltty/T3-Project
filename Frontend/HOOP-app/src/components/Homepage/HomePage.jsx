@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../context/AuthContext";
 import { motion } from "framer-motion";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
@@ -58,12 +59,12 @@ const staggerContainer = {
 export default function HomePage() {
   const navigate = useNavigate();
 
-  // Mock logged in state
-  const isLoggedIn = false;
+  const { user } = useAuth();
+  const isLoggedIn = !!user;
 
   const handleStartPlanning = () => {
     if (isLoggedIn) {
-      navigate("/event-creation/setup");
+      navigate("/event-creation/start");
     } else {
       navigate("/login");
     }

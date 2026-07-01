@@ -5,14 +5,16 @@ export const createAgendaSchema = z.object({
     title:       z.string().min(1, "Agenda item title is required").max(150),
     description: z.string().max(1000).optional(),
     startTime:   z.string().min(1, "Start time is required"),
-    endTime:     z.string().min(1, "End time is required"),
+    endTime:     z.string().optional(), // Optional — duration removed from UI
   }).superRefine((data, ctx) => {
     const start = new Date(data.startTime);
-    const end   = new Date(data.endTime);
     if (isNaN(start.getTime())) ctx.addIssue({ path: ["startTime"], message: "Invalid start time format" });
-    if (isNaN(end.getTime()))   ctx.addIssue({ path: ["endTime"],   message: "Invalid end time format" });
-    if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end <= start) {
-      ctx.addIssue({ path: ["endTime"], message: "End time must be after start time" });
+    if (data.endTime) {
+      const end = new Date(data.endTime);
+      if (isNaN(end.getTime())) ctx.addIssue({ path: ["endTime"], message: "Invalid end time format" });
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end <= start) {
+        ctx.addIssue({ path: ["endTime"], message: "End time must be after start time" });
+      }
     }
   }),
 });

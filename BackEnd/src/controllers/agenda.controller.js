@@ -22,12 +22,13 @@ export const getAgenda = async (req, res) => {
     // ── Enrich each item with live time status ────────────────────────────
     const agenda = rawAgenda.map((item) => {
       const start = new Date(item.startTime);
-      const end   = new Date(item.endTime);
+      // endTime is optional — if absent, treat the item as a point-in-time slot
+      const end   = item.endTime ? new Date(item.endTime) : null;
       return {
         ...item,
-        isCurrent:  now >= start && now < end,
+        isCurrent:  end ? (now >= start && now < end) : false,
         isUpcoming: now < start,
-        isDone:     now >= end,
+        isDone:     end ? now >= end : now > start,
       };
     });
 
@@ -60,7 +61,7 @@ export const createAgendaItem = async (req, res) => {
         title: String(title),
         description: description ? String(description) : null,
         startTime: new Date(startTime),
-        endTime: new Date(endTime),
+        endTime: endTime ? new Date(endTime) : null, // Optional
       },
     });
     res.status(201).json(item);
@@ -94,13 +95,13 @@ export const updateAgendaItem = async (req, res) => {
     // Re-compute live status for the updated item
     const now = new Date();
     const start = new Date(updated.startTime);
-    const end   = new Date(updated.endTime);
+    const end   = updated.endTime ? new Date(updated.endTime) : null;
 
     res.status(200).json({
       ...updated,
-      isCurrent:  now >= start && now < end,
+      isCurrent:  end ? (now >= start && now < end) : false,
       isUpcoming: now < start,
-      isDone:     now >= end,
+      isDone:     end ? now >= end : now > start,
     });
   } catch (err) {
     handleServerError(res, err, "Error updating agenda item");

@@ -267,7 +267,7 @@ model Agenda {
   title       String   @db.VarChar(150)
   description String?  @db.Text
   startTime   DateTime
-  endTime     DateTime
+  endTime     DateTime? // Optional — duration removed from UI
 
   event Event @relation(fields: [eventId], references: [eventId])
 

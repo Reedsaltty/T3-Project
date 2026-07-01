@@ -42,8 +42,12 @@ const eventBody = z.discriminatedUnion("eventSize", [smallEventFields, bigEventF
     const end   = new Date(`${data.eventDate}T${data.eventEndTime}`);
     const now   = new Date();
 
-    if (start <= now) {
-      ctx.addIssue({ path: ["eventTime"], message: "Event start date/time cannot be in the past" });
+    // Only reject if the EVENT DATE itself is in the past (i.e. yesterday or earlier)
+    // Allow same-day events at any time so users can plan events happening later today
+    const eventDay    = new Date(data.eventDate);
+    const todayStart  = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (eventDay < todayStart) {
+      ctx.addIssue({ path: ["eventDate"], message: "Event date cannot be in the past" });
     }
     if (end <= start) {
       ctx.addIssue({ path: ["eventEndTime"], message: "Event end time must be after the start time" });

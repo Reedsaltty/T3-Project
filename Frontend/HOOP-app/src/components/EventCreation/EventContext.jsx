@@ -50,10 +50,13 @@ export function EventProvider({ children }) {
   // Agenda items (renamed from activities to match DB schema)
   const [agenda, setAgenda] = useState(savedState?.agenda || []);
 
+  // Checklist tasks
+  const [checklist, setChecklist] = useState(savedState?.checklist || []);
+
   React.useEffect(() => {
-    const stateToSave = { form, guests, eventDate, location, selectedVenueId, agenda };
+    const stateToSave = { form, guests, eventDate, location, selectedVenueId, agenda, checklist };
     localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(stateToSave));
-  }, [form, guests, eventDate, location, selectedVenueId, agenda]);
+  }, [form, guests, eventDate, location, selectedVenueId, agenda, checklist]);
 
   const resetEventData = () => {
     setForm({
@@ -66,6 +69,7 @@ export function EventProvider({ children }) {
     setEventDate("");
     setLocation({ lat: null, lng: null, address: "", label: "" });
     setAgenda([]);
+    setChecklist([]);
     localStorage.removeItem(LOCAL_STORAGE_KEY);
   };
 
@@ -76,6 +80,7 @@ export function EventProvider({ children }) {
     location, setLocation,
     selectedVenueId, setSelectedVenueId,
     agenda, setAgenda,
+    checklist, setChecklist,
     resetEventData,
   };
 

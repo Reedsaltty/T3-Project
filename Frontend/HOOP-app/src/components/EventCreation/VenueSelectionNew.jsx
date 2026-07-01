@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
 import { useEventContext } from "./EventContext";
 import { ArrowLeft, ArrowRight, MapPin, Users, DollarSign, Star, Search, CheckCircle2, Filter, PlusCircle, X, Loader2 } from "lucide-react";
-import { VENUES } from "./venuesData";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { getVenues, submitVenueApplication } from "../../api/venue.api";
@@ -35,7 +35,7 @@ export default function VenueSelectionNew() {
   const [showFilters, setShowFilters] = useState(false);
   
   // Real venues & Application state
-  const [venuesList, setVenuesList] = useState(VENUES);
+  const [venuesList, setVenuesList] = useState([]);
   const [loadingVenues, setLoadingVenues] = useState(false);
   const [showAppModal, setShowAppModal] = useState(false);
   const [appForm, setAppForm] = useState({
@@ -65,12 +65,10 @@ export default function VenueSelectionNew() {
             rating: 4.8,
             tags: v.amenities || []
           }));
-          const existingIds = new Set(VENUES.map(mv => mv.id));
-          const uniqueBackend = mapped.filter(b => !existingIds.has(b.id));
-          setVenuesList([...uniqueBackend, ...VENUES]);
+          setVenuesList(mapped);
         }
       } catch (err) {
-        console.warn("Could not fetch backend venues, falling back to mock data:", err);
+        console.error("Could not fetch backend venues:", err);
       } finally {
         setLoadingVenues(false);
       }

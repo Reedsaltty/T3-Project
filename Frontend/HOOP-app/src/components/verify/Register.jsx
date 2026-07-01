@@ -37,7 +37,7 @@ export default function Register({ onSwitchView }) {
     try {
       await registerUser({ username: name, email, password });
       setSuccess("Account created! Redirecting to login…");
-      setTimeout(() => navigate("/login"), 1500);
+      setTimeout(() => onSwitchView(), 1500);
     } catch (err) {
       setError(err.response?.data?.message || "Registration failed. Please try again.");
     } finally {

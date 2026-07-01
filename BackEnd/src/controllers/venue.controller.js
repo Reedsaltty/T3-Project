@@ -65,7 +65,8 @@ export const getMyVenues = async (req, res) => {
 // POST — Create a new booking request for a venue
 export const createBooking = async (req, res) => {
   try {
-    const { venueId, eventId } = req.body;
+    const venueId = parseInt(req.params.venueId); // from route param /:venueId/book
+    const { eventId } = req.body;
 
     // Verify the event belongs to the logged-in user
     const event = await prisma.event.findFirst({
@@ -75,15 +76,31 @@ export const createBooking = async (req, res) => {
       return res.status(404).json({ message: "Event not found" });
     }
 
+    // Check for an existing booking for this event (unique constraint guard)
+    const existing = await prisma.venueBooking.findUnique({
+      where: { eventId: parseInt(eventId) },
+    });
+    if (existing) {
+      // Idempotent: if already booked at same venue, treat as success
+      if (existing.venueId === venueId) {
+        return res.status(200).json(existing);
+      }
+      return res.status(409).json({ message: "This event already has a venue booking. Cancel it first." });
+    }
+
     const booking = await prisma.venueBooking.create({
       data: {
-        venueId: parseInt(venueId),
+        venueId,
         eventId: parseInt(eventId),
         status: "pending",
       },
     });
     res.status(201).json(booking);
   } catch (err) {
+    // Prisma unique constraint violation fallback
+    if (err.code === "P2002") {
+      return res.status(409).json({ message: "This event already has a venue booking." });
+    }
     handleServerError(res, err, "Error creating venue booking");
   }
 };

@@ -3,8 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
 import { useEventContext } from "./EventContext";
-import { ArrowLeft, Plus, Trash2, CheckCircle2, Clock, Users, MapPin, Calendar, ListTodo, Zap, Loader2 } from "lucide-react";
-import { VENUES } from "./venuesData";
+import { ArrowLeft, ArrowRight, Plus, Trash2, CheckCircle2, Clock, Users, MapPin, Calendar, ListTodo, Zap, Loader2 } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,10 +14,11 @@ import { Dialog, DialogContent } from "@/components/ui/dialog";
 // API imports
 import { createEvent } from "../../api/event.api";
 import { bookVenue } from "../../api/venue.api";
-import { createActivity } from "../../api/activity.api";
+import { createAgendaItem } from "../../api/agenda.api";
+import { addChecklistItem } from "../../api/checklist.api";
 import { addGuest } from "../../api/guest.api";
 
-const CATEGORIES = ["Ceremony", "Reception", "Entertainment", "Catering", "Logistics", "Other"];
+const CATEGORY_COLORS = {};
 
 let nextId = 5;
 
@@ -29,19 +30,21 @@ const slideIn = {
 export default function TimeAndTask() {
   const navigate = useNavigate();
   const { 
-    activities, setActivities, 
+    agenda: activities, setAgenda: setActivities, 
+    checklist, setChecklist,
     eventDate, setEventDate,
     form, guests, location, selectedVenueId, resetEventData 
   } = useEventContext();
   const [adding, setAdding] = useState(false);
   const [showReview, setShowReview] = useState(false);
-  const [newAct, setNewAct] = useState({ name: "", time: "", duration: 30, category: "Other", desc: "" });
+  const [newAct, setNewAct] = useState({ name: "", time: "", desc: "" });
+  const [newChecklistDesc, setNewChecklistDesc] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function addActivity() {
     if (!newAct.name || !newAct.time) return;
     setActivities(a => [...a, { ...newAct, id: nextId++ }].sort((a, b) => a.time.localeCompare(b.time)));
-    setNewAct({ name: "", time: "", duration: 30, category: "Other", desc: "" });
+    setNewAct({ name: "", time: "", desc: "" });
     setAdding(false);
   }
 
@@ -49,9 +52,29 @@ export default function TimeAndTask() {
     setActivities(a => a.filter(x => x.id !== id));
   }
 
+  function addChecklistTask() {
+    if (!newChecklistDesc.trim()) return;
+    setChecklist(c => [...c, { id: nextId++, description: newChecklistDesc.trim() }]);
+    setNewChecklistDesc("");
+  }
+
+  function removeChecklistTask(id) {
+    setChecklist(c => c.filter(x => x.id !== id));
+  }
+
   const handleCreateEvent = async () => {
     setIsSubmitting(true);
     try {
+      // === Client-side pre-validation ===
+      if (!form.title) return alert("Event title is required.");
+      if (!form.eventTypeId) return alert("Please select an event type.");
+      if (!eventDate) return alert("Please set the event date.");
+      if (!form.startTime) return alert("Please set the event start time.");
+      if (!form.endTime) return alert("Please set the event end time.");
+      if (form.eventSize === "small" && (!location.lat || !location.lng)) {
+        return alert("Please pin a location on the map before submitting.");
+      }
+
       // 1. Create Event
       const eventPayload = {
         eventTitle: form.title,
@@ -63,8 +86,8 @@ export default function TimeAndTask() {
         description: form.description,
         budget: form.budget ? Number(form.budget) : undefined,
         expectedGuests: form.attendance ? Number(form.attendance) : undefined,
-        dressCode: form.dressCode,
-        specialNotes: form.specialNotes,
+        dressCode: form.dressCode || undefined,
+        specialNotes: form.specialNotes || undefined,
       };
 
       if (form.eventSize === "small") {
@@ -74,30 +97,34 @@ export default function TimeAndTask() {
         eventPayload.locationLabel = location.label;
       }
 
-      const { event } = await createEvent(eventPayload);
-      const eventId = event.eventId;
+      // Fix: backend returns the event object directly (not wrapped in { event })
+      const createdEvent = await createEvent(eventPayload);
+      const eventId = createdEvent.eventId;
 
       // 2. Book Venue (if big and selected)
       if (form.eventSize === "big" && selectedVenueId) {
         await bookVenue(selectedVenueId, eventId);
       }
 
-      // 3. Create Activities
+      // 3. Create Agenda Items
       for (const act of activities) {
         const [hours, minutes] = act.time.split(':');
         const start = new Date(eventDate);
         start.setHours(Number(hours), Number(minutes), 0, 0);
-        const end = new Date(start.getTime() + act.duration * 60000);
         
-        await createActivity(eventId, {
+        await createAgendaItem(eventId, {
           title: act.name,
-          description: act.desc,
+          description: act.desc || undefined,
           startTime: start.toISOString(),
-          endTime: end.toISOString()
         });
       }
 
-      // 4. Add Guests
+      // 4. Create Checklist Items
+      for (const task of checklist) {
+        await addChecklistItem(eventId, { description: task.description });
+      }
+
+      // 5. Add Guests
       for (const g of guests) {
         await addGuest(eventId, { name: g.name, email: g.email });
       }
@@ -113,14 +140,6 @@ export default function TimeAndTask() {
     }
   };
 
-  const CATEGORY_COLORS = {
-    Ceremony: "bg-blue-600 border-blue-600", 
-    Reception: "bg-purple-600 border-purple-600", 
-    Entertainment: "bg-pink-600 border-pink-600",
-    Catering: "bg-amber-600 border-amber-600", 
-    Logistics: "bg-emerald-600 border-emerald-600", 
-    Other: "bg-gray-500 border-gray-500"
-  };
 
   return (
     <div className="flex flex-col min-h-screen bg-gray-50/50">
@@ -133,7 +152,7 @@ export default function TimeAndTask() {
             {[
               { n: 1, label: "Set Up Event",    done: true,  active: false },
               { n: 2, label: form.eventSize === "small" ? "Location" : "Venue Selection", done: true,  active: false },
-              { n: 3, label: "Time & Task",     done: false, active: true  },
+              { n: 3, label: "Agenda & Task",   done: false, active: true  },
             ].map((s, i, arr) => (
               <div key={s.n} className="flex items-center flex-1">
                 <div 
@@ -163,27 +182,16 @@ export default function TimeAndTask() {
             
             {/* Left — Inputs */}
             <div className="flex flex-col gap-6">
-              <Card className="shadow-sm border-gray-100">
-                <CardHeader className="pb-4">
-                  <CardTitle>Event Date & Time</CardTitle>
-                  <CardDescription>Set when your event will take place.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <Label>Event Date <span className="text-red-500">*</span></Label>
-                    <Input type="date" value={eventDate} onChange={e => setEventDate(e.target.value)} />
-                  </div>
-                </CardContent>
-              </Card>
+
 
               <Card className="shadow-sm border-gray-100 overflow-hidden">
                 <CardHeader className="pb-4 flex flex-row items-start justify-between bg-white z-10 relative">
                   <div>
-                    <CardTitle>Activities</CardTitle>
+                    <CardTitle>Agenda</CardTitle>
                     <CardDescription>Add and schedule activities for your timeline.</CardDescription>
                   </div>
                   <Button size="sm" onClick={() => setAdding(true)} className="gap-2 shrink-0">
-                    <Plus size={14} /> Add Activity
+                    <Plus size={14} /> Add Item
                   </Button>
                 </CardHeader>
 
@@ -199,25 +207,9 @@ export default function TimeAndTask() {
                         <Label>Activity Name <span className="text-red-500">*</span></Label>
                         <Input placeholder="e.g. Welcome Speech" value={newAct.name} onChange={e => setNewAct(a => ({ ...a, name: e.target.value }))} className="bg-white" />
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <Label>Time <span className="text-red-500">*</span></Label>
-                          <Input type="time" value={newAct.time} onChange={e => setNewAct(a => ({ ...a, time: e.target.value }))} className="bg-white" />
-                        </div>
-                        <div className="space-y-2">
-                          <Label>Duration (min)</Label>
-                          <Input type="number" min={5} max={480} step={5} value={newAct.duration} onChange={e => setNewAct(a => ({ ...a, duration: +e.target.value }))} className="bg-white" />
-                        </div>
-                      </div>
                       <div className="space-y-2">
-                        <Label>Category</Label>
-                        <select 
-                          className="flex h-10 w-full items-center justify-between rounded-md border border-gray-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2" 
-                          value={newAct.category} 
-                          onChange={e => setNewAct(a => ({ ...a, category: e.target.value }))}
-                        >
-                          {CATEGORIES.map(c => <option key={c}>{c}</option>)}
-                        </select>
+                        <Label>Time <span className="text-red-500">*</span></Label>
+                        <Input type="time" value={newAct.time} onChange={e => setNewAct(a => ({ ...a, time: e.target.value }))} className="bg-white" />
                       </div>
                       <div className="space-y-2">
                         <Label>Description</Label>
@@ -242,10 +234,9 @@ export default function TimeAndTask() {
                         className="flex items-center justify-between p-4 px-6 border-b border-gray-50 last:border-0 hover:bg-gray-50/80 transition-colors"
                       >
                         <div className="flex items-center gap-4">
-                          <div className={`w-2.5 h-2.5 rounded-full shrink-0 ${CATEGORY_COLORS[act.category] || CATEGORY_COLORS.Other}`} />
                           <div>
                             <p className="text-sm font-semibold text-gray-900 leading-none mb-1.5">{act.name}</p>
-                            <p className="text-xs font-medium text-gray-500">{act.category} · {act.duration} min</p>
+                            {act.desc && <p className="text-xs font-medium text-gray-500">{act.desc}</p>}
                           </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -261,6 +252,53 @@ export default function TimeAndTask() {
                   </AnimatePresence>
                 </div>
               </Card>
+
+              {/* Task Checklist */}
+              <Card className="shadow-sm border-gray-100 overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle>Task Checklist</CardTitle>
+                  <CardDescription>Keep track of things you need to do before the event.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex gap-2 mb-4">
+                    <Input 
+                      placeholder="e.g. Confirm headcount" 
+                      value={newChecklistDesc}
+                      onChange={(e) => setNewChecklistDesc(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && addChecklistTask()}
+                      className="bg-gray-50/50"
+                    />
+                    <Button onClick={addChecklistTask} className="shrink-0 gap-1 px-4"><Plus size={16} /> Add</Button>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <AnimatePresence>
+                      {checklist.map((task) => (
+                        <motion.div 
+                          key={task.id}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          className="flex items-center justify-between p-3 px-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:border-blue-200 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className="w-5 h-5 rounded-md border border-gray-300 flex items-center justify-center shrink-0">
+                              {/* Empty checkbox since tasks aren't done yet during setup */}
+                            </div>
+                            <span className="text-sm text-gray-700 font-medium">{task.description}</span>
+                          </div>
+                          <button onClick={() => removeChecklistTask(task.id)} className="text-gray-400 hover:text-red-500 p-1">
+                            <Trash2 size={16} />
+                          </button>
+                        </motion.div>
+                      ))}
+                    </AnimatePresence>
+                    {checklist.length === 0 && (
+                      <p className="text-center text-sm text-gray-400 py-4">No tasks added yet.</p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Right — Timeline Preview */}
@@ -274,7 +312,7 @@ export default function TimeAndTask() {
                   {activities.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3 text-sm">
                       <Clock size={32} className="opacity-20" />
-                      Add activities to see the timeline.
+                      Add agenda items to see the timeline.
                     </div>
                   ) : (
                     <div className="flex flex-col">
@@ -284,7 +322,7 @@ export default function TimeAndTask() {
                             {act.time}
                           </div>
                           <div className="relative bg-gray-200">
-                            <div className={`absolute top-[18px] left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-[2px] border-white shadow-[0_0_0_2px_currentColor] z-10 ${CATEGORY_COLORS[act.category]?.split(' ')[0] || "bg-blue-600"} text-${CATEGORY_COLORS[act.category]?.split('-')[1]}-600`} />
+                            <div className="absolute top-[18px] left-1/2 -translate-x-1/2 w-3 h-3 rounded-full border-[2px] border-white shadow-[0_0_0_2px_#2563eb] z-10 bg-blue-600" />
                           </div>
                           <div className="py-2 pb-6">
                             <div className="bg-white border border-gray-100 shadow-sm rounded-xl p-4">
@@ -356,7 +394,7 @@ export default function TimeAndTask() {
                     <span className="text-xl font-bold text-gray-900 leading-tight truncate">
                       {form.eventSize === "small" 
                         ? (location.label || "Map Pin Location")
-                        : (selectedVenueId ? VENUES.find(v => v.id === selectedVenueId)?.name || `Venue Selected` : "TBD")}
+                        : (selectedVenueId ? "Venue Selected" : "TBD")}
                     </span>
                     <span className="text-xs font-medium text-gray-400 mt-1">{form.eventSize === "small" ? "address" : "selected venue"}</span>
                   </div>
@@ -371,7 +409,7 @@ export default function TimeAndTask() {
 
                   <div className="bg-gray-50 border border-gray-100 rounded-2xl p-5 flex flex-col gap-1 hover:border-blue-200 transition-colors group">
                     <div className="flex items-center gap-2 text-gray-500 text-sm font-semibold uppercase tracking-wider mb-2">
-                      <ListTodo size={16} className="text-blue-500 group-hover:scale-110 transition-transform" /> Activities
+                      <ListTodo size={16} className="text-blue-500 group-hover:scale-110 transition-transform" /> Agenda
                     </div>
                     <span className="text-2xl font-bold text-gray-900 leading-none">{activities?.length || 0}</span>
                     <span className="text-xs font-medium text-gray-400 mt-1">planned in timeline</span>

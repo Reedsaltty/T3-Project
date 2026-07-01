@@ -66,11 +66,16 @@ export default function Navbar() {
               <Button onClick={() => navigate("/login")}>Sign Up</Button>
             </div>
           ) : (
-            <div className="hidden md:flex items-center gap-3 cursor-pointer" onClick={() => navigate("/dashboard")}>
-              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-sm uppercase">
-                {user?.username ? user.username.substring(0, 2) : "U"}
+            <div className="hidden md:flex items-center gap-4">
+              <Button variant="ghost" className="text-gray-600 font-medium" onClick={() => navigate("/profile")}>
+                My Profile
+              </Button>
+              <div className="flex items-center gap-3 cursor-pointer p-1.5 pr-3 bg-blue-50 hover:bg-blue-100 rounded-full transition-colors" onClick={() => navigate("/dashboard")}>
+                <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-sm uppercase shadow-sm">
+                  {user?.username ? user.username.substring(0, 2) : "U"}
+                </div>
+                <span className="text-sm font-semibold text-blue-900">{user?.username || "User"}</span>
               </div>
-              <span className="text-sm font-semibold text-gray-700">{user?.username || "User"}</span>
             </div>
           )}
           <button
@@ -102,11 +107,16 @@ export default function Navbar() {
               <Button className="w-full" onClick={() => { setMenuOpen(false); navigate("/login"); }}>Sign Up</Button>
             </div>
           ) : (
-            <div className="flex items-center gap-3 mt-2 border-t border-gray-100 pt-4 px-2 cursor-pointer" onClick={() => { setMenuOpen(false); navigate("/dashboard"); }}>
-              <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-base uppercase">
-                {user?.username ? user.username.substring(0, 2) : "U"}
+            <div className="flex flex-col gap-2 mt-2 border-t border-gray-100 pt-4">
+              <Button variant="ghost" className="w-full justify-start text-gray-700 font-medium" onClick={() => { setMenuOpen(false); navigate("/profile"); }}>
+                My Profile
+              </Button>
+              <div className="flex items-center gap-3 px-4 py-2 mt-2 bg-blue-50 rounded-xl cursor-pointer" onClick={() => { setMenuOpen(false); navigate("/dashboard"); }}>
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold text-base uppercase shadow-sm">
+                  {user?.username ? user.username.substring(0, 2) : "U"}
+                </div>
+                <span className="text-base font-semibold text-blue-900">{user?.username || "User"}</span>
               </div>
-              <span className="text-base font-semibold text-gray-700">{user?.username || "User"}</span>
             </div>
           )}
         </div>

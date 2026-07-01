@@ -63,7 +63,7 @@ export default function Dashboard() {
 
   const handleCreateEvent = () => {
     resetEventData();
-    navigate("/event-creation/setup");
+    navigate("/event-creation/start");
   };
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("All");

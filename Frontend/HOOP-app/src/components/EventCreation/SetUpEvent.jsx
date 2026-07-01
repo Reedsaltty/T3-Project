@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import Navbar from "../Homepage/Navbar";
 import { useEventContext } from "./EventContext";
-import { ArrowLeft, ArrowRight, CheckCircle2, Trash2, Home, Building2 } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -86,7 +86,7 @@ export default function SetUpEvent() {
           <div className="flex items-center bg-white border border-gray-100 rounded-2xl p-5 px-8 shadow-sm mb-10">
             {[
               { n: 1, label: "Set Up Event",    active: true,  done: false },
-              { n: 2, label: "Venue / Location", active: false, done: false },
+              { n: 2, label: form.eventSize === "small" ? "Location" : "Venue", active: false, done: false },
               { n: 3, label: "Timeline & Tasks", active: false, done: false },
             ].map((s, i, arr) => (
               <div key={s.n} className="flex items-center flex-1">
@@ -109,61 +109,7 @@ export default function SetUpEvent() {
 
           <motion.div variants={slideIn} initial="hidden" animate="show" className="flex flex-col gap-10">
 
-            {/* 1. Event Size Picker */}
-            <div>
-              <div className="mb-6">
-                <h2 className="text-3xl font-heading font-bold text-gray-900 tracking-tight">What kind of event?</h2>
-                <p className="text-gray-500 mt-1">This determines how you set the location. Cannot be changed after creation.</p>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  {
-                    size: "small",
-                    icon: Home,
-                    title: "Small Event",
-                    subtitle: "House party, dinner, study group",
-                    desc: "You'll pin your exact location on a map.",
-                    color: "blue",
-                  },
-                  {
-                    size: "big",
-                    icon: Building2,
-                    title: "Big Event",
-                    subtitle: "Wedding, gala, conference",
-                    desc: "You'll select a venue from our listings.",
-                    color: "purple",
-                  },
-                ].map(({ size, icon: Icon, title, subtitle, desc, color }) => {
-                  const isSelected = form.eventSize === size;
-                  return (
-                    <button
-                      key={size}
-                      type="button"
-                      onClick={() => setField("eventSize", size)}
-                      className={`text-left p-6 rounded-2xl border-2 transition-all duration-200 ${
-                        isSelected
-                          ? `border-${color}-500 bg-${color}-50 shadow-[0_0_0_4px_rgba(59,130,246,0.1)]`
-                          : "border-gray-200 bg-white hover:border-gray-300"
-                      }`}
-                    >
-                      <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 ${isSelected ? `bg-${color}-100` : "bg-gray-100"}`}>
-                        <Icon size={22} className={isSelected ? `text-${color}-600` : "text-gray-400"} />
-                      </div>
-                      <p className="font-bold text-gray-900 text-lg">{title}</p>
-                      <p className="text-sm text-gray-500 mb-1">{subtitle}</p>
-                      <p className="text-xs text-gray-400">{desc}</p>
-                      {isSelected && (
-                        <div className={`mt-3 inline-flex items-center gap-1 text-xs font-bold text-${color}-600 bg-${color}-100 px-2 py-1 rounded-full`}>
-                          <CheckCircle2 size={12} /> Selected
-                        </div>
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 2. Event Details */}
+            {/* 1. Event Details */}
             <div>
               <div className="mb-6">
                 <h2 className="text-3xl font-heading font-bold text-gray-900 tracking-tight">Create new event</h2>
@@ -218,30 +164,32 @@ export default function SetUpEvent() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="startTime" className="text-gray-700">Start time <span className="text-red-500">*</span></Label>
-                        <Input id="startTime" type="time" value={form.startTime} onChange={e => setField("startTime", e.target.value)} className="bg-white border-0 h-11" />
+                        <Input id="startTime" type="time" value={form.startTime} onChange={e => setField("startTime", e.target.value)} onBlur={e => setField("startTime", e.target.value)} className="bg-white border-0 h-11" />
                         {errors.startTime && <span className="text-xs text-red-500">{errors.startTime}</span>}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="endTime" className="text-gray-700">End time <span className="text-red-500">*</span></Label>
-                        <Input id="endTime" type="time" value={form.endTime} onChange={e => setField("endTime", e.target.value)} className="bg-white border-0 h-11" />
+                        <Input id="endTime" type="time" value={form.endTime} onChange={e => setField("endTime", e.target.value)} onBlur={e => setField("endTime", e.target.value)} className="bg-white border-0 h-11" />
                         {errors.endTime && <span className="text-xs text-red-500">{errors.endTime}</span>}
                       </div>
                     </div>
 
-                    {/* Row 4: Expected Guests + Budget */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="attendance" className="text-gray-700">Expected attendance</Label>
-                        <Input id="attendance" type="number" min="1" placeholder="e.g. 50" value={form.attendance} onChange={e => setField("attendance", e.target.value)} className="bg-white border-0 h-11" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="budget" className="text-gray-700">Budget</Label>
-                        <div className="relative">
-                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">฿</span>
-                          <Input id="budget" type="number" min="0" placeholder="e.g. 5,000" value={form.budget} onChange={e => setField("budget", e.target.value)} className="bg-white border-0 h-11 pl-10" />
+                    {/* Row 4: Expected Guests + Budget (Big Events Only) */}
+                    {form.eventSize === "big" && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                          <Label htmlFor="attendance" className="text-gray-700">Expected attendance</Label>
+                          <Input id="attendance" type="number" min="1" placeholder="e.g. 50" value={form.attendance} onChange={e => setField("attendance", e.target.value)} className="bg-white border-0 h-11" />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="budget" className="text-gray-700">Budget</Label>
+                          <div className="relative">
+                            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-bold">฿</span>
+                            <Input id="budget" type="number" min="0" placeholder="e.g. 5,000" value={form.budget} onChange={e => setField("budget", e.target.value)} className="bg-white border-0 h-11 pl-10" />
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    )}
 
                     {/* Row 5: Description */}
                     <div className="space-y-2">
@@ -257,27 +205,10 @@ export default function SetUpEvent() {
                       />
                     </div>
 
-                    {/* Row 6: Dress Code + Special Notes */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div className="space-y-2">
-                        <Label htmlFor="dressCode" className="text-gray-700">Dress code</Label>
-                        <select
-                          id="dressCode"
-                          value={form.dressCode}
-                          onChange={e => setField("dressCode", e.target.value)}
-                          className="w-full h-11 rounded-md border-0 bg-white px-3 text-gray-900 text-sm ring-1 ring-gray-200 focus:ring-2 focus:ring-blue-500 outline-none"
-                        >
-                          <option value="">None / Not specified</option>
-                          <option>Casual</option>
-                          <option>Semi-formal</option>
-                          <option>Formal</option>
-                          <option>Themed</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="specialNotes" className="text-gray-700">Special notes</Label>
-                        <Input id="specialNotes" maxLength={500} placeholder="e.g. BYOB, parking behind building" value={form.specialNotes} onChange={e => setField("specialNotes", e.target.value)} className="bg-white border-0 h-11" />
-                      </div>
+                    {/* Row 6: Special Notes */}
+                    <div className="space-y-2">
+                      <Label htmlFor="specialNotes" className="text-gray-700">Special notes</Label>
+                      <Input id="specialNotes" maxLength={500} placeholder="e.g. BYOB, parking behind building" value={form.specialNotes} onChange={e => setField("specialNotes", e.target.value)} className="bg-white border-0 h-11" />
                     </div>
                   </form>
                 </CardContent>

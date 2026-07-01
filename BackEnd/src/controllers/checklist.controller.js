@@ -14,7 +14,15 @@ export const getChecklist = async (req, res) => {
 
     // ── Auto-close: if the event has ended, mark all pending items as done ──
     const now = new Date();
-    const eventEnded = event.eventEndTime && new Date(event.eventEndTime) < now;
+    // eventDate is @db.Date (date-only) and eventEndTime is @db.Time (time-only)
+    // Combine them into a proper full datetime for comparison
+    let eventEnded = false;
+    if (event.eventDate && event.eventEndTime) {
+      const dateStr = new Date(event.eventDate).toISOString().split('T')[0]; // "YYYY-MM-DD"
+      const timeStr = new Date(event.eventEndTime).toISOString().split('T')[1]; // "HH:MM:SS.sssZ"
+      const fullEndDatetime = new Date(`${dateStr}T${timeStr}`);
+      eventEnded = fullEndDatetime < now;
+    }
 
     if (eventEnded) {
       await prisma.checklist.updateMany({
@@ -54,9 +62,15 @@ export const addChecklistItem = async (req, res) => {
     if (!event) return res.status(404).json({ message: "Event not found" });
 
     // Block adding items to a finished event
+    // Combine eventDate (@db.Date) + eventEndTime (@db.Time) for a proper full datetime comparison
     const now = new Date();
-    if (event.eventEndTime && new Date(event.eventEndTime) < now) {
-      return res.status(409).json({ message: "Cannot add items to an event that has already ended" });
+    if (event.eventDate && event.eventEndTime) {
+      const dateStr = new Date(event.eventDate).toISOString().split('T')[0];
+      const timeStr = new Date(event.eventEndTime).toISOString().split('T')[1];
+      const fullEndDatetime = new Date(`${dateStr}T${timeStr}`);
+      if (fullEndDatetime < now) {
+        return res.status(409).json({ message: "Cannot add items to an event that has already ended" });
+      }
     }
 
     const item = await prisma.checklist.create({
